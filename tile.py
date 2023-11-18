@@ -18,3 +18,7 @@ class Tile():
     def change_solid(self):
         self.solid = True
         self.color = RED if self.solid else BLUE2
+
+    def change_not_solid(self):
+        self.solid = False
+        self.color = RED if self.solid else BLUE2

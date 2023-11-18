@@ -89,23 +89,28 @@ class GameLevelCreator:
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
-            elif event.type == pygame.KEYDOWN:
-                if event.key == pygame.K_LEFT:
-                    self.move_left(self.agent)
-                elif event.key == pygame.K_RIGHT:
-                    self.move_right(self.agent)
-                elif event.key == pygame.K_UP:
-                    self.move_up(self.agent)
-                elif event.key == pygame.K_DOWN:
-                    self.move_down(self.agent)
-                elif event.key == pygame.K_q:
-                    pygame.quit()
-                    quit()
-            elif pygame.mouse.get_pressed()[0]:
-                for tile in self.tiles:
-                    (x, y) = pygame.mouse.get_pos()
-                    if tile.rect.collidepoint((x-50, y-50)):
-                        tile.change_solid()
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.move_left(self.agent)
+        elif keys[pygame.K_RIGHT]:
+            self.move_right(self.agent)
+        elif keys[pygame.K_UP]:
+            self.move_up(self.agent)
+        elif keys[pygame.K_DOWN]:
+            self.move_down(self.agent)
+        elif keys[pygame.K_q]:
+            pygame.quit()
+            quit()
+        elif pygame.mouse.get_pressed()[0]:
+            for tile in self.tiles:
+                (x, y) = pygame.mouse.get_pos()
+                if tile.rect.collidepoint((x-50, y-50)):
+                    tile.change_solid()
+        elif pygame.mouse.get_pressed()[1]:
+            for tile in self.tiles:
+                (x, y) = pygame.mouse.get_pos()
+                if tile.rect.collidepoint((x-50, y-50)):
+                    tile.change_not_solid()
                 
         self._update_ui()
         self.clock.tick(SPEED)
