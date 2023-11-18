@@ -3,6 +3,7 @@ from collections import namedtuple
 from tile import Tile
 from agent import Agent
 import numpy as np
+import pickle
 
 pygame.init()
 #font = pygame.font.Font('arial.ttf', 25)
@@ -17,18 +18,21 @@ BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
-SPEED = 500
+SPEED = 10
 
 class GameLevelCreator:
     
-    def __init__(self, w=1400, h=750, bs=20):
+    def __init__(self, w=1400, h=750, bs=15):
         #display params
         self.screen_width = w
         self.screen_height = h
         self.block_size = bs
+        self.board_start = 50
+        self.stats_width = 250
 
-        self.width = int((w-100))
-        self.height = int((h-100))
+        self.width = int((w-self.board_start-self.stats_width))
+        self.height = int((h-2*self.board_start))
+
 
         # init display
         self.display = pygame.display.set_mode((self.screen_width, self.screen_height))
@@ -38,12 +42,28 @@ class GameLevelCreator:
 
         self.tiles = []
         self.agent = Agent(self.block_size//2, self.block_size//2)
-        self.setup()
+        self._setup()
 
-    def setup(self):
+    def _setup(self):
         for x in range(0, self.width, self.block_size):
             for y in range(0, self.height, self.block_size):
                 self.tiles.append(Tile(False, self.block_size, x, y))
+
+    def _get_game_state(self):
+        return {
+            "block_size": self.block_size,
+            "layout": self.tiles
+        }
+    
+    def save(self, savefile):
+        with open(savefile, "wb") as f:
+            pickle.dump(self._get_game_state(), f)
+
+    def load(self, savefile):
+        with open(savefile, "rb") as f:
+            new_state = pickle.load(f)
+            self.block_size = new_state["block_size"]
+            self.tiles = new_state["tiles"]
 
     def move_left(self, agent):
         if (agent.x - self.block_size <= 0):
@@ -106,7 +126,7 @@ class GameLevelCreator:
                 (x, y) = pygame.mouse.get_pos()
                 if tile.rect.collidepoint((x-50, y-50)):
                     tile.change_solid()
-        elif pygame.mouse.get_pressed()[1]:
+        elif pygame.mouse.get_pressed()[2]:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
                 if tile.rect.collidepoint((x-50, y-50)):
@@ -121,12 +141,12 @@ class GameLevelCreator:
         
     def _update_ui(self):
         self.display.fill(BLACK)
-        self.drawBackground()
+        self._draw_background()
         self.display.blit(self.game_board, [50, 50])
 
         pygame.display.flip()
 
-    def drawBackground(self):
+    def _draw_background(self):
         for tile in self.tiles:
             pygame.draw.rect(self.game_board, tile.color, tile.rect)
         for x in range(0,   self.width, self.block_size):
