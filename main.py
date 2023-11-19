@@ -1,4 +1,4 @@
-import pygame
+'''import pygame
 from level_creator import GameLevelCreator
 
 
@@ -14,4 +14,12 @@ if __name__ == '__main__':
     while True:
         game.play_step()
 
-    pygame.quit()
+    pygame.quit()'''
+
+"""
+pygame-menu
+https://github.com/ppizarror/pygame-menu
+
+EXAMPLE - SIMPLE
+Super simple example of pygame-menu usage, featuring a selector and a button.
+"""

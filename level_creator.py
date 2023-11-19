@@ -56,11 +56,11 @@ class GameLevelCreator:
         }
     
     def save(self, savefile):
-        with open(savefile, "wb") as f:
+        with open("saves/"+savefile, "wb") as f:
             pickle.dump(self._get_game_state(), f)
 
     def load(self, savefile):
-        with open(savefile, "rb") as f:
+        with open("saves/"+savefile, "rb") as f:
             new_state = pickle.load(f)
             self.block_size = new_state["block_size"]
             self.tiles = new_state["tiles"]
@@ -118,6 +118,8 @@ class GameLevelCreator:
             self.move_up(self.agent)
         elif keys[pygame.K_DOWN]:
             self.move_down(self.agent)
+        elif keys[pygame.K_s]: #@TODO: do it properly
+            self.save("school")
         elif keys[pygame.K_q]:
             pygame.quit()
             quit()
