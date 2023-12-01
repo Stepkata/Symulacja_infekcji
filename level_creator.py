@@ -22,7 +22,7 @@ SPEED = 10
 
 class GameLevelCreator:
     
-    def __init__(self, w=1400, h=750, bs=15):
+    def __init__(self, w=1400, h=750, bs=50):
         #display params
         self.screen_width = w
         self.screen_height = h
@@ -62,8 +62,8 @@ class GameLevelCreator:
     def load(self, savefile):
         with open("saves/"+savefile, "rb") as f:
             new_state = pickle.load(f)
-            self.block_size = new_state["block_size"]
-            self.tiles = new_state["tiles"]
+            self.block_size = new_state.get('block_size')
+            self.tiles = new_state.get("tiles", [])
 
     def move_left(self, agent):
         if (agent.x - self.block_size <= 0):
