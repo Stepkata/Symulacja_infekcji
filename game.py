@@ -20,7 +20,7 @@ BLACK = (0,0,0)
 
 SPEED = 10
 
-class GameLevelCreator:
+class Game:
     
     def __init__(self, w=1400, h=750, bs=50):
         #display params
@@ -37,10 +37,11 @@ class GameLevelCreator:
         # init display
         self.display = pygame.display.set_mode((self.screen_width, self.screen_height))
         self.game_board = pygame.surface.Surface((self.width, self.height)).convert()
-        pygame.display.set_caption('GameLevelCreator')
+        pygame.display.set_caption('Game')
         self.clock = pygame.time.Clock()
 
         self.tiles = []
+        self.agent = Agent(self.block_size//2, self.block_size//2)
         self._setup()
 
     def _setup(self):
@@ -80,6 +81,42 @@ class GameLevelCreator:
         except Exception as e:
             print(f'Error loading from {file_path}: {e}')
 
+    def move_left(self, agent):
+        if (agent.x - self.block_size <= 0):
+            return
+        else:
+            for tile in self.tiles: #@TODO: REVRITE
+                if tile.rect.collidepoint(agent.x- self.block_size, agent.y) and tile.solid: 
+                    return
+            agent.x -= self.block_size
+
+    def move_right(self, agent):
+        if (agent.x + self.block_size > self.width):
+            return
+        else:
+            for tile in self.tiles: #@TODO: REVRITE
+                if tile.rect.collidepoint(agent.x +self.block_size, agent.y) and tile.solid:
+                    return
+            agent.x += self.block_size
+
+    def move_up(self, agent):
+        if (agent.y- self.block_size <= 0):
+            return
+        else:
+            for tile in self.tiles: #@TODO: REVRITE
+                if tile.rect.collidepoint(agent.x, agent.y- self.block_size) and tile.solid: 
+                    return
+            agent.y -= self.block_size
+
+    def move_down(self, agent):
+        if (agent.y + self.block_size >= self.height):
+            return
+        else:
+            for tile in self.tiles: #@TODO: REVRITE
+                if tile.rect.collidepoint(agent.x, agent.y + self.block_size) and tile.solid:
+                    return
+            agent.y += self.block_size
+
 
     def play_step(self):
         
@@ -89,7 +126,15 @@ class GameLevelCreator:
                 pygame.quit()
                 quit()
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_s]: #@TODO: do it properly
+        if keys[pygame.K_LEFT]:
+            self.move_left(self.agent)
+        elif keys[pygame.K_RIGHT]:
+            self.move_right(self.agent)
+        elif keys[pygame.K_UP]:
+            self.move_up(self.agent)
+        elif keys[pygame.K_DOWN]:
+            self.move_down(self.agent)
+        elif keys[pygame.K_s]: #@TODO: do it properly
             self.save("pool")
         elif keys[pygame.K_q]:
             pygame.quit()
@@ -126,6 +171,7 @@ class GameLevelCreator:
             pygame.draw.line(self.game_board, (255, 255, 255, 0), (x, 0), ( x,  self.height))
         for y in range(0,  self.height, self.block_size):
             pygame.draw.line(self.game_board, (255, 255, 255, 20), (0, y), ( self.width, y))
+        pygame.draw.circle(self.game_board, BLACK, (self.agent.x, self.agent.y), self.block_size//4)   
 
 if __name__ == '__main__':
     pygame.init()
@@ -134,7 +180,7 @@ if __name__ == '__main__':
     screen_width, screen_height = screen_info.current_w, screen_info.current_h
     screen = pygame.display.set_mode((screen_width, screen_height))
 
-    game = GameLevelCreator(screen_width, screen_height)
+    game = Game(screen_width, screen_height)
 
     while True:
         game.play_step()

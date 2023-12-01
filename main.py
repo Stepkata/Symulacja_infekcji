@@ -3,18 +3,20 @@ import pygame
 import pygame_menu
 from pygame_menu import themes
 from level_creator import GameLevelCreator
+from game import Game
 import os
  
 pygame.init()
 surface = pygame.display.set_mode((1400, 750))
-game = GameLevelCreator()
+game = Game()
+level_creator = GameLevelCreator()
 
-def set_level(value, _):
-    print("LOADED: ", value)
-    game.load(value[0][0])
-def set_difficulty(value, difficulty):
-    print(value)
-    print(difficulty)
+def set_level(value, level):
+    if level !=0:
+        print("LOADED: ", value)
+        game.load(value[0][0])
+        level_creator.load(value[0][0])
+
  
 def start_the_game():
     mainmenu._open(loading)
@@ -22,13 +24,19 @@ def start_the_game():
     while True:
         game.play_step()
 
+def start_the_level_creator():
+    mainmenu._open(loading)
+    pygame.time.set_timer(update_loading, 30) 
+    while True:
+        level_creator.play_step()
+
 def get_saved_levels():
     directory_path = 'saves'
     try:
         files = [f for f in os.listdir(directory_path) if os.path.isfile(os.path.join(directory_path, f))]
         
         # Create a dictionary with file names as keys and their order as values
-        file_tuples = [(f, i) for i, f in enumerate(files)]
+        file_tuples = [(f, i+1) for i, f in enumerate(files)]
         
         return file_tuples
     except OSError as e:
@@ -39,7 +47,9 @@ def get_saved_levels():
 mainmenu = pygame_menu.Menu('Welcome', 1400, 750, theme=themes.THEME_DARK)
 mainmenu.add.text_input('Name: ', default='username')
 mainmenu.add.button('Play', start_the_game)
+mainmenu.add.button('Level creator', start_the_level_creator)
 levels = get_saved_levels()
+levels.insert(0, ("Empty", 0))
 print(levels)
 mainmenu.add.selector('Level :', levels, onchange=set_level)
 
