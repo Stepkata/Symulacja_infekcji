@@ -56,14 +56,30 @@ class GameLevelCreator:
         }
     
     def save(self, savefile):
-        with open("saves/"+savefile, "wb") as f:
-            pickle.dump(self._get_game_state(), f)
+        file_path = "saves/"+savefile
+        try:
+            with open(file_path, 'wb') as file:
+                # Serialize the necessary data using pickle
+                save_data = {
+                    'block_size' : self.block_size,
+                    'tiles': self.tiles
+                }
+                pickle.dump(save_data, file)
+            print(f'Successfully saved to {file_path}')
+        except Exception as e:
+            print(f'Error saving to {file_path}: {e}')
 
     def load(self, savefile):
-        with open("saves/"+savefile, "rb") as f:
-            new_state = pickle.load(f)
-            self.block_size = new_state.get('block_size')
-            self.tiles = new_state.get("tiles", [])
+        file_path = "saves/"+savefile
+        try:
+            with open(file_path, 'rb') as file:
+                # Deserialize the data using pickle
+                load_data = pickle.load(file)
+                self.block_size = load_data.get('block_size', 10)
+                self.tiles = load_data.get('tiles', [])
+            print(f'Successfully loaded from {file_path}')
+        except Exception as e:
+            print(f'Error loading from {file_path}: {e}')
 
     def move_left(self, agent):
         if (agent.x - self.block_size <= 0):
@@ -119,7 +135,7 @@ class GameLevelCreator:
         elif keys[pygame.K_DOWN]:
             self.move_down(self.agent)
         elif keys[pygame.K_s]: #@TODO: do it properly
-            self.save("school")
+            self.save("pool")
         elif keys[pygame.K_q]:
             pygame.quit()
             quit()
