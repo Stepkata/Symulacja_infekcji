@@ -6,42 +6,47 @@ import numpy as np
 import pickle
 
 pygame.init()
-#font = pygame.font.Font('arial.ttf', 25)
-font = pygame.font.SysFont('arial', 25)
+# font = pygame.font.Font('arial.ttf', 25)
+font = pygame.font.SysFont("arial", 25)
 
-    
-Point = namedtuple('Point', 'x, y')
+
+Point = namedtuple("Point", "x, y")
 
 WHITE = (255, 255, 255)
-RED = (200,0,0)
+RED = (200, 0, 0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
-BLACK = (0,0,0)
+BLACK = (0, 0, 0)
 
 SPEED = 10
 
+
 class Game:
-    
     def __init__(self, w=1400, h=750, bs=50):
-        #display params
+        # display params
         self.screen_width = w
         self.screen_height = h
         self.block_size = bs
         self.board_start = 50
         self.stats_width = 250
 
-        self.width = int((w-self.board_start-self.stats_width))
-        self.height = int((h-2*self.board_start))
-
+        self.width = int((w - self.board_start - self.stats_width))
+        self.height = int((h - 2 * self.board_start))
 
         # init display
-        self.display = pygame.display.set_mode((self.screen_width, self.screen_height))
-        self.game_board = pygame.surface.Surface((self.width, self.height)).convert()
-        pygame.display.set_caption('Game')
+        self.display = pygame.display.set_mode(
+            (self.screen_width, self.screen_height)
+        )
+        self.game_board = pygame.surface.Surface(
+            (self.width, self.height)
+        ).convert()
+        pygame.display.set_caption("Game")
         self.clock = pygame.time.Clock()
 
         self.tiles = []
-        self.agent = Agent(self.block_size//2, self.block_size//2)
+        self.agent = Agent(
+            self.block_size // 2 + 500, self.block_size // 2 + 250, "u"
+        )
         self._setup()
 
     def _setup(self):
@@ -50,76 +55,91 @@ class Game:
                 self.tiles.append(Tile(False, self.block_size, x, y))
 
     def _get_game_state(self):
-        return {
-            "block_size": self.block_size,
-            "layout": self.tiles
-        }
-    
+        return {"block_size": self.block_size, "layout": self.tiles}
+
     def save(self, savefile):
-        file_path = "saves/"+savefile
+        file_path = "saves/" + savefile
         try:
-            with open(file_path, 'wb') as file:
+            with open(file_path, "wb") as file:
                 # Serialize the necessary data using pickle
                 save_data = {
-                    'block_size' : self.block_size,
-                    'tiles': self.tiles
+                    "block_size": self.block_size,
+                    "tiles": self.tiles,
                 }
                 pickle.dump(save_data, file)
-            print(f'Successfully saved to {file_path}')
+            print(f"Successfully saved to {file_path}")
         except Exception as e:
-            print(f'Error saving to {file_path}: {e}')
+            print(f"Error saving to {file_path}: {e}")
 
     def load(self, savefile):
-        file_path = "saves/"+savefile
+        file_path = "saves/" + savefile
         try:
-            with open(file_path, 'rb') as file:
+            with open(file_path, "rb") as file:
                 # Deserialize the data using pickle
                 load_data = pickle.load(file)
-                self.block_size = load_data.get('block_size', 10)
-                self.tiles = load_data.get('tiles', [])
-            print(f'Successfully loaded from {file_path}')
+                self.block_size = load_data.get("block_size", 10)
+                self.tiles = load_data.get("tiles", [])
+            print(f"Successfully loaded from {file_path}")
         except Exception as e:
-            print(f'Error loading from {file_path}: {e}')
+            print(f"Error loading from {file_path}: {e}")
 
     def move_left(self, agent):
-        if (agent.x - self.block_size <= 0):
+        if agent.x - self.block_size <= 0:
             return
         else:
-            for tile in self.tiles: #@TODO: REVRITE
-                if tile.rect.collidepoint(agent.x- self.block_size, agent.y) and tile.solid: 
+            for tile in self.tiles:  # @TODO: REVRITE
+                if (
+                    tile.rect.collidepoint(agent.x - self.block_size, agent.y)
+                    and tile.solid
+                ):
                     return
             agent.x -= self.block_size
 
     def move_right(self, agent):
-        if (agent.x + self.block_size > self.width):
+        if agent.x + self.block_size > self.width:
             return
         else:
-            for tile in self.tiles: #@TODO: REVRITE
-                if tile.rect.collidepoint(agent.x +self.block_size, agent.y) and tile.solid:
+            for tile in self.tiles:  # @TODO: REVRITE
+                if (
+                    tile.rect.collidepoint(agent.x + self.block_size, agent.y)
+                    and tile.solid
+                ):
                     return
             agent.x += self.block_size
 
     def move_up(self, agent):
-        if (agent.y- self.block_size <= 0):
+        if agent.y - self.block_size <= 0:
             return
         else:
-            for tile in self.tiles: #@TODO: REVRITE
-                if tile.rect.collidepoint(agent.x, agent.y- self.block_size) and tile.solid: 
+            for tile in self.tiles:  # @TODO: REVRITE
+                if (
+                    tile.rect.collidepoint(agent.x, agent.y - self.block_size)
+                    and tile.solid
+                ):
                     return
             agent.y -= self.block_size
 
     def move_down(self, agent):
-        if (agent.y + self.block_size >= self.height):
+        if agent.y + self.block_size >= self.height:
             return
         else:
-            for tile in self.tiles: #@TODO: REVRITE
-                if tile.rect.collidepoint(agent.x, agent.y + self.block_size) and tile.solid:
+            for tile in self.tiles:  # @TODO: REVRITE
+                if (
+                    tile.rect.collidepoint(agent.x, agent.y + self.block_size)
+                    and tile.solid
+                ):
                     return
             agent.y += self.block_size
 
+    def step_machine(self, sim_steps):
+        for step in range(0, sim_steps):
+            self.play_step()
+            self.clock.tick(100)
 
     def play_step(self):
-        
+        sim_mode = 1
+        if sim_mode:
+            self.agent._run_controller()
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -134,7 +154,7 @@ class Game:
             self.move_up(self.agent)
         elif keys[pygame.K_DOWN]:
             self.move_down(self.agent)
-        elif keys[pygame.K_s]: #@TODO: do it properly
+        elif keys[pygame.K_s]:  # @TODO: do it properly
             self.save("pool")
         elif keys[pygame.K_q]:
             pygame.quit()
@@ -142,21 +162,20 @@ class Game:
         elif pygame.mouse.get_pressed()[0]:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
-                if tile.rect.collidepoint((x-50, y-50)):
+                if tile.rect.collidepoint((x - 50, y - 50)):
                     tile.change_solid()
         elif pygame.mouse.get_pressed()[2]:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
-                if tile.rect.collidepoint((x-50, y-50)):
+                if tile.rect.collidepoint((x - 50, y - 50)):
                     tile.change_not_solid()
-                
+
         self._update_ui()
         self.clock.tick(SPEED)
-        
+
         # 6. return game over and score
         return False
-    
-        
+
     def _update_ui(self):
         self.display.fill(BLACK)
         self._draw_background()
@@ -167,13 +186,23 @@ class Game:
     def _draw_background(self):
         for tile in self.tiles:
             pygame.draw.rect(self.game_board, tile.color, tile.rect)
-        for x in range(0,   self.width, self.block_size):
-            pygame.draw.line(self.game_board, (255, 255, 255, 0), (x, 0), ( x,  self.height))
-        for y in range(0,  self.height, self.block_size):
-            pygame.draw.line(self.game_board, (255, 255, 255, 20), (0, y), ( self.width, y))
-        pygame.draw.circle(self.game_board, BLACK, (self.agent.x, self.agent.y), self.block_size//4)   
+        for x in range(0, self.width, self.block_size):
+            pygame.draw.line(
+                self.game_board, (255, 255, 255, 0), (x, 0), (x, self.height)
+            )
+        for y in range(0, self.height, self.block_size):
+            pygame.draw.line(
+                self.game_board, (255, 255, 255, 20), (0, y), (self.width, y)
+            )
+        pygame.draw.circle(
+            self.game_board,
+            WHITE,
+            (self.agent.x, self.agent.y),
+            self.block_size // 4,
+        )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     pygame.init()
 
     screen_info = pygame.display.Info()
