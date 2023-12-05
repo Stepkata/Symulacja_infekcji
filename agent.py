@@ -2,11 +2,13 @@ import Controller
 
 
 class Agent:
-    def __init__(self, x, y, direction, color) -> None:
+    def __init__(self,id, x, y, direction, color, infected) -> None:
+        self.id = id
         self.x = x
         self.y = y
         self.direction = direction
         self.color = color
+        self.infected = infected
         self.controller = Controller.IndividualController(self)
 
     def _run_controller(self):

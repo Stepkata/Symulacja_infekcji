@@ -5,6 +5,7 @@ from agent import Agent
 import numpy as np
 import pickle
 import random
+from infectionSpread import InfectionSpread
 
 pygame.init()
 # font = pygame.font.Font('arial.ttf', 25)
@@ -47,25 +48,51 @@ class Game:
 
         self.tiles = []
 
-        self.num_agents = 5
+        #Ilość agentów
+        self.num_agents = 10
+        #Agenci
         self.agents = []
+        #Zainfekopwani agenci
+        self.infected_agents = []
+        #Czas do iinfekcji
+        self.time = 0
         # self.agent = Agent(
         #     self.block_size // 2 + 500, self.block_size // 2 + 250, "u"
         # )
 
-        
-        for _ in range(self.num_agents):
-            new_agent = Agent(
+        #ID agentow
+        self.agent_id = 0
+
+        infected_agent = Agent(
+            self.agent_id,
             self.block_size // 2 + 500,
             self.block_size // 2 + 250,
             "u",
-            WHITE
+            RED,
+            True
+        )
+        self.agents.append(infected_agent)
+        self.infected_agents.append(infected_agent)
+        
+        self.agent_id += 1
+        
+        for _ in range(self.num_agents):
+            new_agent = Agent(
+                self.agent_id,
+                self.block_size // 2 + 500,
+                self.block_size // 2 + 250,
+                "u",
+                WHITE,
+                False
             )
             self.agents.append(new_agent)
+            self.agent_id += 1
 
         self._place_agents_randomly(
             self.board_start, self.board_start, self.width, self.height
         )
+
+        self.infection_spread = InfectionSpread(self.block_size)
         self._setup()
 
     def _place_agents_randomly(self, start_x, start_y, end_x, end_y):
@@ -80,7 +107,10 @@ class Game:
             squares.remove(selected_square)
 
     def _change_agent_color(self, agent):
-        pass
+        if agent in self.infected_agents:
+            agent.color = RED
+
+
     def _setup(self):
         for x in range(0, self.width, self.block_size):
             for y in range(0, self.height, self.block_size):
@@ -180,9 +210,27 @@ class Game:
                 )
                 agent._run_controller()
 
+        #Zbieranie sąsiadów 
+        for infected_agent in self.infected_agents:
+            self.infection_spread._get_neighbors(infected_agent, self.agents)
+
+
+        #Do wyznaczania zainfekowanych 
+        self.time +=1
+        if self.time % 10 == 0:
+            self.time = 0 
+            new_infected_agents = []
+            for infected_agent in self.infected_agents:
+                new_infected_agents += self.infection_spread._spread_infection( 0.8)
+            
+            for new_infected_agent in new_infected_agents:
+                self.infected_agents.append(new_infected_agent)
+       
+
+        #Zmiana koloru zainfekowanych
         for agent in self.agents:
             self._change_agent_color(agent)
-
+        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -249,6 +297,8 @@ class Game:
                 (agent.x, agent.y),
                 self.block_size // 4,
             )
+
+
 
 
 if __name__ == "__main__":
