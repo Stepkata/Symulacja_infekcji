@@ -32,6 +32,7 @@ class Game:
         self.stats_width = 250
 
         self.speed = 10
+        self.old_speed = 0
 
         self.width = int((w - self.board_start - self.stats_width))
         self.height = int((h - 2 * self.board_start))
@@ -221,7 +222,8 @@ class Game:
         return False
     
     def _handle_sp_button_up(self):
-        self.speed += 5
+        if self.speed < 400:
+            self.speed += 5
 
     def _handle_sp_button_down(self):
         if self.speed > 5:
