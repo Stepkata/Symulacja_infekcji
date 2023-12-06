@@ -54,7 +54,7 @@ def get_saved_levels():
 
 
 mainmenu = pygame_menu.Menu("Welcome", 1400, 750, theme=themes.THEME_DARK)
-mainmenu.add.text_input("Name: ", default="username")
+#mainmenu.add.text_input("Name: ", default="username")
 mainmenu.add.button("Play", start_the_game)
 mainmenu.add.button("Level creator", start_the_level_creator)
 levels = get_saved_levels()

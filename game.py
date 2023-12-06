@@ -21,8 +21,6 @@ BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
-SPEED = 10
-
 
 class Game:
     def __init__(self, w=1400, h=750, bs=50):
@@ -32,6 +30,8 @@ class Game:
         self.block_size = bs
         self.board_start = 50
         self.stats_width = 250
+
+        self.speed = 10
 
         self.width = int((w - self.board_start - self.stats_width))
         self.height = int((h - 2 * self.board_start))
@@ -43,10 +43,19 @@ class Game:
         self.game_board = pygame.surface.Surface(
             (self.width, self.height)
         ).convert()
+        self.toolbar = pygame.surface.Surface(
+            (self.stats_width, self.height)
+        ).convert()
         pygame.display.set_caption("Game")
         self.clock = pygame.time.Clock()
 
         self.tiles = []
+        self.sp_button_up = pygame.Rect(self.screen_width-140, 100, 30, 20)
+        self.sp_button_up_hover = False
+        self.sp_button_down = pygame.Rect(self.screen_width-140, 130, 30, 20)
+        self.sp_button_down_hover = False
+        self.stop_button = pygame.Rect(self.screen_width-180, 180, 80, 30)
+        self.stop_button_hover = False
 
         #Ilość agentów
         self.num_agents = 10
@@ -145,53 +154,6 @@ class Game:
         except Exception as e:
             print(f"Error loading from {file_path}: {e}")
 
-    def move_left(self, agent):
-        if agent.x - self.block_size <= 0:
-            return
-        else:
-            for tile in self.tiles:  # @TODO: REVRITE
-                if (
-                    tile.rect.collidepoint(agent.x - self.block_size, agent.y)
-                    and tile.solid
-                ):
-                    return
-            agent.x -= self.block_size
-
-    def move_right(self, agent):
-        if agent.x + self.block_size > self.width:
-            return
-        else:
-            for tile in self.tiles:  # @TODO: REVRITE
-                if (
-                    tile.rect.collidepoint(agent.x + self.block_size, agent.y)
-                    and tile.solid
-                ):
-                    return
-            agent.x += self.block_size
-
-    def move_up(self, agent):
-        if agent.y - self.block_size <= 0:
-            return
-        else:
-            for tile in self.tiles:  # @TODO: REVRITE
-                if (
-                    tile.rect.collidepoint(agent.x, agent.y - self.block_size)
-                    and tile.solid
-                ):
-                    return
-            agent.y -= self.block_size
-
-    def move_down(self, agent):
-        if agent.y + self.block_size >= self.height:
-            return
-        else:
-            for tile in self.tiles:  # @TODO: REVRITE
-                if (
-                    tile.rect.collidepoint(agent.x, agent.y + self.block_size)
-                    and tile.solid
-                ):
-                    return
-            agent.y += self.block_size
 
     def step_machine(self, sim_steps):
         for step in range(0, sim_steps):
@@ -199,77 +161,87 @@ class Game:
             self.clock.tick(100)
 
     def play_step(self):
-        sim_mode = 1
-        # if sim_mode:
-        #     self.agent._run_controller()
-        if sim_mode:
-            for agent in self.agents:
-                agent._set_agents_array(self.agents)
-                agent._set_dimensions(
-                    self.width, self.height, self.block_size
-                )
-                agent._run_controller()
+        self.sp_button_down_hover = self.sp_button_down.collidepoint(pygame.mouse.get_pos())
+        self.sp_button_up_hover = self.sp_button_up.collidepoint(pygame.mouse.get_pos())
+        self.stop_button_hover = self.stop_button.collidepoint(pygame.mouse.get_pos())
 
-        #Zbieranie sąsiadów 
-        for infected_agent in self.infected_agents:
-            self.infection_spread._get_neighbors(infected_agent, self.agents)
-
-
-        #Do wyznaczania zainfekowanych 
-        self.time +=1
-        if self.time % 10 == 0:
-            self.time = 0 
-            new_infected_agents = []
-            for infected_agent in self.infected_agents:
-                new_infected_agents += self.infection_spread._spread_infection( 0.8)
-            
-            for new_infected_agent in new_infected_agents:
-                self.infected_agents.append(new_infected_agent)
-       
-
-        #Zmiana koloru zainfekowanych
-        for agent in self.agents:
-            self._change_agent_color(agent)
-        
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                    pygame.quit()
+                    quit()
+            keys = pygame.key.get_pressed()
+            if keys[pygame.K_q]:
                 pygame.quit()
                 quit()
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_LEFT]:
-            self.move_left(self.agent)
-        elif keys[pygame.K_RIGHT]:
-            self.move_right(self.agent)
-        elif keys[pygame.K_UP]:
-            self.move_up(self.agent)
-        elif keys[pygame.K_DOWN]:
-            self.move_down(self.agent)
-        elif keys[pygame.K_s]:  # @TODO: do it properly
-            self.save("pool")
-        elif keys[pygame.K_q]:
-            pygame.quit()
-            quit()
-        elif pygame.mouse.get_pressed()[0]:
-            for tile in self.tiles:
-                (x, y) = pygame.mouse.get_pos()
-                if tile.rect.collidepoint((x - 50, y - 50)):
-                    tile.change_solid()
-        elif pygame.mouse.get_pressed()[2]:
-            for tile in self.tiles:
-                (x, y) = pygame.mouse.get_pos()
-                if tile.rect.collidepoint((x - 50, y - 50)):
-                    tile.change_not_solid()
+
+        if pygame.mouse.get_pressed()[0]:
+                if self.sp_button_down.collidepoint(pygame.mouse.get_pos()):
+                    self._handle_sp_button_down()
+                elif self.sp_button_up.collidepoint(pygame.mouse.get_pos()):
+                    self._handle_sp_button_up()
+                elif self.stop_button.collidepoint(pygame.mouse.get_pos()):
+                    self._handle_stop()
+
+        
+        if self.speed > 0:
+            sim_mode = 1
+            # if sim_mode:
+            #     self.agent._run_controller()
+            if sim_mode:
+                for agent in self.agents:
+                    agent._set_agents_array(self.agents)
+                    agent._set_dimensions(
+                        self.width, self.height, self.block_size
+                    )
+                    agent._run_controller()
+
+            #Zbieranie sąsiadów 
+            for infected_agent in self.infected_agents:
+                self.infection_spread._get_neighbors(infected_agent, self.agents)
+
+
+            #Do wyznaczania zainfekowanych 
+            self.time +=1
+            if self.time % 10 == 0:
+                self.time = 0 
+                new_infected_agents = []
+                for infected_agent in self.infected_agents:
+                    new_infected_agents += self.infection_spread._spread_infection( 0.8)
+                
+                for new_infected_agent in new_infected_agents:
+                    self.infected_agents.append(new_infected_agent)
+        
+
+            #Zmiana koloru zainfekowanych
+            for agent in self.agents:
+                self._change_agent_color(agent)
 
         self._update_ui()
-        self.clock.tick(SPEED)
-
-        # 6. return game over and score
+        self.clock.tick(self.speed)
         return False
+    
+    def _handle_sp_button_up(self):
+        self.speed += 5
+
+    def _handle_sp_button_down(self):
+        if self.speed > 5:
+            self.speed -= 5
+
+    def _handle_stop(self):
+        self.speed = 0
+
+    def _render_text(self, surface, text, font_size, position, color):
+        font = pygame.font.Font(None, font_size)
+        text_render = font.render(text, True, color)
+        surface.blit(text_render, position)
 
     def _update_ui(self):
         self.display.fill(BLACK)
         self._draw_background()
-        self.display.blit(self.game_board, [50, 50])
+        self.display.blit(self.game_board, [self.board_start, self.board_start])
+        self._draw_toolbar()
+        self.display.blit(self.toolbar, [self.screen_width-self.stats_width, 0])
+        self._draw_clickable_buttons()
 
         pygame.display.flip()
 
@@ -297,6 +269,15 @@ class Game:
                 (agent.x, agent.y),
                 self.block_size // 4,
             )
+    
+    def _draw_toolbar(self):
+        pygame.draw.rect(self.toolbar, WHITE, pygame.Rect(30, 100, 70, 50) )
+        self._render_text(self.toolbar, str(self.speed), 40, (50, 115), BLACK)
+
+    def _draw_clickable_buttons(self):
+        pygame.draw.rect(self.display, WHITE if self.sp_button_up_hover else BLUE1, self.sp_button_up )
+        pygame.draw.rect(self.display, WHITE if self.sp_button_down_hover else BLUE1, self.sp_button_down )
+        pygame.draw.rect(self.display, RED if self.stop_button_hover else BLUE1, self.stop_button)
 
 
 

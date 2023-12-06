@@ -18,7 +18,7 @@ BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
-SPEED = 10
+SPEED = 20
 
 class GameLevelCreator:
     
@@ -37,8 +37,14 @@ class GameLevelCreator:
         # init display
         self.display = pygame.display.set_mode((self.screen_width, self.screen_height))
         self.game_board = pygame.surface.Surface((self.width, self.height)).convert()
+        self.toolbar = pygame.surface.Surface((self.stats_width, self.height)).convert()
         pygame.display.set_caption('GameLevelCreator')
         self.clock = pygame.time.Clock()
+
+        self.bs_button_up = pygame.Rect(self.screen_width-140, 100, 30, 20)
+        self.bs_button_up_hover = False
+        self.bs_button_down = pygame.Rect(self.screen_width-140, 130, 30, 20)
+        self.bs_button_down_hover = False
 
         self.tiles = []
         self._setup()
@@ -82,12 +88,14 @@ class GameLevelCreator:
 
 
     def play_step(self):
-        
+        self.bs_button_down_hover = self.bs_button_down.collidepoint(pygame.mouse.get_pos())
+        self.bs_button_up_hover = self.bs_button_up.collidepoint(pygame.mouse.get_pos())
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 quit()
+
         keys = pygame.key.get_pressed()
         if keys[pygame.K_s]: #@TODO: do it properly
             self.save("pool")
@@ -99,6 +107,10 @@ class GameLevelCreator:
                 (x, y) = pygame.mouse.get_pos()
                 if tile.rect.collidepoint((x-50, y-50)):
                     tile.change_solid()
+            if self.bs_button_down.collidepoint(pygame.mouse.get_pos()):
+                self._handle_bs_button_down()
+            elif self.bs_button_up.collidepoint(pygame.mouse.get_pos()):
+                self._handle_bs_button_up()
         elif pygame.mouse.get_pressed()[2]:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
@@ -111,11 +123,27 @@ class GameLevelCreator:
         # 6. return game over and score
         return False
     
+    def _handle_bs_button_up(self):
+        self.block_size += 5
+        self._setup()
+
+    def _handle_bs_button_down(self):
+        if self.block_size > 5:
+            self.block_size -= 5
+            self._setup()
+    
+    def _render_text(self, surface, text, font_size, position, color):
+        font = pygame.font.Font(None, font_size)
+        text_render = font.render(text, True, color)
+        surface.blit(text_render, position)
         
     def _update_ui(self):
         self.display.fill(BLACK)
         self._draw_background()
-        self.display.blit(self.game_board, [50, 50])
+        self.display.blit(self.game_board, [self.board_start, self.board_start])
+        self._draw_toolbar()
+        self.display.blit(self.toolbar, [self.screen_width-self.stats_width, 0])
+        self._draw_clickable_buttons()
 
         pygame.display.flip()
 
@@ -126,6 +154,17 @@ class GameLevelCreator:
             pygame.draw.line(self.game_board, (255, 255, 255, 0), (x, 0), ( x,  self.height))
         for y in range(0,  self.height, self.block_size):
             pygame.draw.line(self.game_board, (255, 255, 255, 20), (0, y), ( self.width, y))
+
+    def _draw_toolbar(self):
+        pygame.draw.rect(self.toolbar, WHITE, pygame.Rect(30, 100, 70, 50) )
+        self._render_text(self.toolbar, str(self.block_size), 40, (50, 115), BLACK)
+
+    def _draw_clickable_buttons(self):
+        pygame.draw.rect(self.display, WHITE if self.bs_button_up_hover else BLUE1, self.bs_button_up )
+        pygame.draw.rect(self.display, WHITE if self.bs_button_down_hover else BLUE1, self.bs_button_down )
+
+
+        
 
 if __name__ == '__main__':
     pygame.init()
