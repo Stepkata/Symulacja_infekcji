@@ -31,7 +31,7 @@ class Game:
         self.board_start = 50
         self.stats_width = 250
 
-        self.speed = 10
+        self.speed = 100
         self.old_speed = 0
 
         self.width = int((w - self.board_start - self.stats_width))
@@ -151,6 +151,7 @@ class Game:
                 load_data = pickle.load(file)
                 self.block_size = load_data.get("block_size", 10)
                 self.tiles = load_data.get("tiles", [])
+                self.num_agents = load_data.get('num_agents', 10)
             print(f"Successfully loaded from {file_path}")
         except Exception as e:
             print(f"Error loading from {file_path}: {e}")

@@ -18,7 +18,7 @@ BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
 
-SPEED = 20
+SPEED = 100
 
 class GameLevelCreator:
     
@@ -29,6 +29,7 @@ class GameLevelCreator:
         self.block_size = bs
         self.board_start = 50
         self.stats_width = 250
+        self.num_agents = 10
 
         self.width = int((w-self.board_start-self.stats_width))
         self.height = int((h-2*self.board_start))
@@ -45,6 +46,11 @@ class GameLevelCreator:
         self.bs_button_up_hover = False
         self.bs_button_down = pygame.Rect(self.screen_width-140, 130, 30, 20)
         self.bs_button_down_hover = False
+
+        self.na_button_up = pygame.Rect(self.screen_width-140, 180, 30, 20)
+        self.na_button_up_hover = False
+        self.na_button_down = pygame.Rect(self.screen_width-140, 210, 30, 20)
+        self.na_button_down_hover = False
 
         self.tiles = []
         self._setup()
@@ -67,7 +73,8 @@ class GameLevelCreator:
                 # Serialize the necessary data using pickle
                 save_data = {
                     'block_size' : self.block_size,
-                    'tiles': self.tiles
+                    'tiles': self.tiles,
+                    'num_agents': self.num_agents
                 }
                 pickle.dump(save_data, file)
             print(f'Successfully saved to {file_path}')
@@ -82,6 +89,7 @@ class GameLevelCreator:
                 load_data = pickle.load(file)
                 self.block_size = load_data.get('block_size', 10)
                 self.tiles = load_data.get('tiles', [])
+                self.num_agents = load_data.get('num_agents', 10)
             print(f'Successfully loaded from {file_path}')
         except Exception as e:
             print(f'Error loading from {file_path}: {e}')
@@ -90,6 +98,8 @@ class GameLevelCreator:
     def play_step(self):
         self.bs_button_down_hover = self.bs_button_down.collidepoint(pygame.mouse.get_pos())
         self.bs_button_up_hover = self.bs_button_up.collidepoint(pygame.mouse.get_pos())
+        self.na_button_down_hover = self.na_button_down.collidepoint(pygame.mouse.get_pos())
+        self.na_button_up_hover = self.na_button_up.collidepoint(pygame.mouse.get_pos())
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -111,6 +121,10 @@ class GameLevelCreator:
                 self._handle_bs_button_down()
             elif self.bs_button_up.collidepoint(pygame.mouse.get_pos()):
                 self._handle_bs_button_up()
+            if self.na_button_down.collidepoint(pygame.mouse.get_pos()):
+                self._handle_na_button_down()
+            elif self.na_button_up.collidepoint(pygame.mouse.get_pos()):
+                self._handle_na_button_up()
         elif pygame.mouse.get_pressed()[2]:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
@@ -131,6 +145,13 @@ class GameLevelCreator:
         if self.block_size > 5:
             self.block_size -= 5
             self._setup()
+
+    def _handle_na_button_up(self):
+        self.num_agents += 1
+
+    def _handle_na_button_down(self):
+        if self.num_agents > 2:
+            self.num_agents -= 1
     
     def _render_text(self, surface, text, font_size, position, color):
         font = pygame.font.Font(None, font_size)
@@ -158,10 +179,16 @@ class GameLevelCreator:
     def _draw_toolbar(self):
         pygame.draw.rect(self.toolbar, WHITE, pygame.Rect(30, 100, 70, 50) )
         self._render_text(self.toolbar, str(self.block_size), 40, (50, 115), BLACK)
+        pygame.draw.rect(self.toolbar, WHITE, pygame.Rect(30, 180, 70, 50) )
+        self._render_text(self.toolbar, str(self.num_agents), 40, (50, 195), BLACK)
 
     def _draw_clickable_buttons(self):
+        self._render_text(self.display, "Tile size", 30, (self.screen_width-200, 70), WHITE)
         pygame.draw.rect(self.display, WHITE if self.bs_button_up_hover else BLUE1, self.bs_button_up )
         pygame.draw.rect(self.display, WHITE if self.bs_button_down_hover else BLUE1, self.bs_button_down )
+        self._render_text(self.display, "Number of agents", 30, (self.screen_width-200, 160), WHITE)
+        pygame.draw.rect(self.display, WHITE if self.na_button_up_hover else BLUE1,   self.na_button_up )
+        pygame.draw.rect(self.display, WHITE if self.na_button_down_hover else BLUE1, self.na_button_down )
 
 
         
