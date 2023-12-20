@@ -17,6 +17,7 @@ RED = (200,0,0)
 BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0,0,0)
+GREEN=(0,255,0)
 
 SPEED = 100
 
@@ -51,6 +52,14 @@ class GameLevelCreator:
         self.na_button_up_hover = False
         self.na_button_down = pygame.Rect(self.screen_width-140, 210, 30, 20)
         self.na_button_down_hover = False
+
+        self.draw = pygame.Rect(self.screen_width-100, 260, 50, 50)
+
+        self.erase = pygame.Rect(self.screen_width-100, 340, 50, 50)
+
+        self.create_check = pygame.Rect(self.screen_width-100, 420, 50, 50)
+
+        self.wall_state = 0
 
         self.tiles = []
         self._setup()
@@ -101,6 +110,13 @@ class GameLevelCreator:
         self.na_button_down_hover = self.na_button_down.collidepoint(pygame.mouse.get_pos())
         self.na_button_up_hover = self.na_button_up.collidepoint(pygame.mouse.get_pos())
 
+        if self.draw.collidepoint(pygame.mouse.get_pos()):
+            self.wall_state = 0
+        elif self.erase.collidepoint(pygame.mouse.get_pos()):
+            self.wall_state = 1
+        elif self.create_check.collidepoint(pygame.mouse.get_pos()):
+            self.wall_state = 2
+
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
@@ -116,7 +132,12 @@ class GameLevelCreator:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
                 if tile.rect.collidepoint((x-50, y-50)):
-                    tile.change_solid()
+                    if self.wall_state == 0:
+                        tile.change_solid()
+                    elif self.wall_state == 2:
+                        tile.change_checkpoint()
+                    else:
+                        tile.change_not_solid()
             if self.bs_button_down.collidepoint(pygame.mouse.get_pos()):
                 self._handle_bs_button_down()
             elif self.bs_button_up.collidepoint(pygame.mouse.get_pos()):
@@ -189,6 +210,13 @@ class GameLevelCreator:
         self._render_text(self.display, "Number of agents", 30, (self.screen_width-200, 160), WHITE)
         pygame.draw.rect(self.display, WHITE if self.na_button_up_hover else BLUE1,   self.na_button_up )
         pygame.draw.rect(self.display, WHITE if self.na_button_down_hover else BLUE1, self.na_button_down )
+
+        self._render_text(self.display, "Wall", 30, (self.screen_width-230, 280), WHITE)
+        pygame.draw.rect(self.display, RED, self.draw)
+        self._render_text(self.display, "Erase all", 30, (self.screen_width-230, 360), WHITE)
+        pygame.draw.rect(self.display, BLUE2, self.erase)
+        self._render_text(self.display, "Checkpoint", 30, (self.screen_width-230, 440), WHITE)
+        pygame.draw.rect(self.display, GREEN, self.create_check)
 
 
         
