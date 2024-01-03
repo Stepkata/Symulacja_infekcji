@@ -13,6 +13,7 @@ font = pygame.font.SysFont("arial", 25)
 
 
 Point = namedtuple("Point", "x, y")
+TilePoint = namedtuple('TilePoint', 'position, solid')
 
 WHITE = (255, 255, 255)
 RED = (200, 0, 0)
@@ -31,7 +32,7 @@ class Game:
         self.board_start = 50
         self.stats_width = 250
 
-        self.speed = 100
+        self.speed = 40
         self.old_speed = 0
 
         self.width = int((w - self.board_start - self.stats_width))
@@ -51,6 +52,8 @@ class Game:
         self.clock = pygame.time.Clock()
 
         self.tiles = []
+        self.map = []
+        self.checkpoints = []
         self.sp_button_up = pygame.Rect(self.screen_width-140, 100, 30, 20)
         self.sp_button_up_hover = False
         self.sp_button_down = pygame.Rect(self.screen_width-140, 130, 30, 20)
@@ -64,7 +67,7 @@ class Game:
         self.agents = []
         #Zainfekopwani agenci
         self.infected_agents = []
-        #Czas do iinfekcji
+        #Czas do infekcji
         self.time = 0
         # self.agent = Agent(
         #     self.block_size // 2 + 500, self.block_size // 2 + 250, "u"
@@ -121,10 +124,26 @@ class Game:
             agent.color = RED
 
 
-    def _setup(self):
-        for x in range(0, self.width, self.block_size):
-            for y in range(0, self.height, self.block_size):
-                self.tiles.append(Tile(False, self.block_size, x, y))
+    def _setup(self, map = None):
+        if map is None:
+            for x in range(0, self.width, self.block_size):
+                for y in range(0, self.height, self.block_size):
+                    self.tiles.append(Tile(False, self.block_size, x, y))
+
+    def get_map(self):
+        map = []
+        for tile in self.tiles:
+            tile_point = TilePoint((tile.x, tile.y), 1 if tile.solid else 0)
+            map.append(tile_point)
+        map = np.reshape(map, (self.width//self.block_size+1, self.height//self.block_size+1, -1))
+        return map
+
+    def get_checkpoints(self):
+        checkpoints = []
+        for tile in self.tiles:
+            if tile.checkpoint:
+                checkpoints.append(Point(tile.x, tile.y))
+        return checkpoints
 
     def _get_game_state(self):
         return {"block_size": self.block_size, "layout": self.tiles}
@@ -152,6 +171,8 @@ class Game:
                 self.block_size = load_data.get("block_size", 10)
                 self.tiles = load_data.get("tiles", [])
                 self.num_agents = load_data.get('num_agents', 10)
+                self.map = load_data.get('map', [])
+                self.checkpoints = load_data.get('checkpoints', [])
             print(f"Successfully loaded from {file_path}")
         except Exception as e:
             print(f"Error loading from {file_path}: {e}")
@@ -259,12 +280,7 @@ class Game:
             pygame.draw.line(
                 self.game_board, (255, 255, 255, 20), (0, y), (self.width, y)
             )
-        # pygame.draw.circle(
-        #     self.game_board,
-        #     WHITE,
-        #     (self.agent.x, self.agent.y),
-        #     self.block_size // 4,
-        # )
+            
         for agent in self.agents:
             pygame.draw.circle(
                 self.game_board,
@@ -293,6 +309,9 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
 
     game = Game(screen_width, screen_height)
+    game.load("pool")
+    print(game.get_map())
+    print(game.get_checkpoints())
 
     while True:
         game.play_step()

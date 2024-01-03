@@ -6,6 +6,7 @@ class Agent:
         self.id = id
         self.x = x
         self.y = y
+        self.position = (x,y)
         self.direction = direction
         self.color = color
         self.infected = infected

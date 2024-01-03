@@ -11,6 +11,7 @@ font = pygame.font.SysFont('arial', 25)
 
     
 Point = namedtuple('Point', 'x, y')
+TilePoint = namedtuple('TilePoint', 'position, solid')
 
 WHITE = (255, 255, 255)
 RED = (200,0,0)
@@ -59,6 +60,9 @@ class GameLevelCreator:
 
         self.create_check = pygame.Rect(self.screen_width-100, 420, 50, 50)
 
+        self.save_btn = pygame.Rect(self.screen_width-100, 480, 50, 50)
+        self.save_btn_hover = False
+
         self.wall_state = 0
 
         self.tiles = []
@@ -75,6 +79,21 @@ class GameLevelCreator:
             "layout": self.tiles
         }
     
+    def get_map(self):
+        map = []
+        for tile in self.tiles:
+            tile_point = TilePoint((tile.x, tile.y), 1 if tile.solid else 0)
+            map.append(tile_point)
+        map = np.reshape(map, (self.width//self.block_size+1, self.height//self.block_size+1, -1))
+        return map
+
+    def get_checkpoints(self):
+        checkpoints = []
+        for tile in self.tiles:
+            if tile.checkpoint:
+                checkpoints.append(Point(tile.x, tile.y))
+        return checkpoints
+    
     def save(self, savefile):
         file_path = "saves/"+savefile
         try:
@@ -83,7 +102,9 @@ class GameLevelCreator:
                 save_data = {
                     'block_size' : self.block_size,
                     'tiles': self.tiles,
-                    'num_agents': self.num_agents
+                    'num_agents': self.num_agents,
+                    'map': self.get_map(),
+                    'checkpoints': self.get_checkpoints()
                 }
                 pickle.dump(save_data, file)
             print(f'Successfully saved to {file_path}')
@@ -109,6 +130,7 @@ class GameLevelCreator:
         self.bs_button_up_hover = self.bs_button_up.collidepoint(pygame.mouse.get_pos())
         self.na_button_down_hover = self.na_button_down.collidepoint(pygame.mouse.get_pos())
         self.na_button_up_hover = self.na_button_up.collidepoint(pygame.mouse.get_pos())
+        self.save_btn_hover = self.save_btn.collidepoint(pygame.mouse.get_pos())
 
         if self.draw.collidepoint(pygame.mouse.get_pos()):
             self.wall_state = 0
@@ -146,6 +168,9 @@ class GameLevelCreator:
                 self._handle_na_button_down()
             elif self.na_button_up.collidepoint(pygame.mouse.get_pos()):
                 self._handle_na_button_up()
+            elif self.save_btn.collidepoint(pygame.mouse.get_pos()):
+                self.save("test")
+
         elif pygame.mouse.get_pressed()[2]:
             for tile in self.tiles:
                 (x, y) = pygame.mouse.get_pos()
@@ -217,6 +242,9 @@ class GameLevelCreator:
         pygame.draw.rect(self.display, BLUE2, self.erase)
         self._render_text(self.display, "Checkpoint", 30, (self.screen_width-230, 440), WHITE)
         pygame.draw.rect(self.display, GREEN, self.create_check)
+
+        self._render_text(self.display, "Save", 30, (self.screen_width-230, 500), WHITE)
+        pygame.draw.rect(self.display, GREEN, self.save_btn)
 
 
         
