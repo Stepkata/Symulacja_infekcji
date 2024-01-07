@@ -6,6 +6,7 @@ import numpy as np
 import pickle
 import random
 from infectionSpread import InfectionSpread
+from button import Button 
 
 pygame.init()
 # font = pygame.font.Font('arial.ttf', 25)
@@ -51,15 +52,24 @@ class Game:
         pygame.display.set_caption("Game")
         self.clock = pygame.time.Clock()
 
-        self.tiles = []
+
+        self.h = int(self.height/self.block_size)
+        self.w = int(self.width/self.block_size)
+        self.tiles = np.empty((self.w, self.h), dtype=object)
         self.map = []
         self.checkpoints = []
-        self.sp_button_up = pygame.Rect(self.screen_width-140, 100, 30, 20)
-        self.sp_button_up_hover = False
-        self.sp_button_down = pygame.Rect(self.screen_width-140, 130, 30, 20)
-        self.sp_button_down_hover = False
-        self.stop_button = pygame.Rect(self.screen_width-180, 180, 80, 30)
-        self.stop_button_hover = False
+
+        self.buttons = [
+            Button("Speed", self.screen_width-140, 100, 30, 20, BLUE1),
+            Button("Speed_down", self.screen_width-140, 130, 30, 20, BLUE1, False),
+            Button("Stop", self.screen_width-180, 280, 50, 50, RED),
+        ]
+
+        self.button_actions = {
+            self.buttons[0]: self._handle_sp_button_up,
+            self.buttons[1]:self._handle_sp_button_down,
+            self.buttons[2]:self._handle_stop,
+        }
 
         #Ilość agentów
         self.num_agents = 10
@@ -124,25 +134,20 @@ class Game:
             agent.color = RED
 
 
-    def _setup(self, map = None):
-        if map is None:
-            for x in range(0, self.width, self.block_size):
-                for y in range(0, self.height, self.block_size):
-                    self.tiles.append(Tile(False, self.block_size, x, y))
+    def _setup(self) -> None:
+        self.h = int(self.height/self.block_size)+1
+        self.w = int(self.width/self.block_size)+1
+        self.tiles = np.empty((self.w, self.h), dtype=object)
+        for x in range(0, self.w):
+            for y in range(0, self.h):
+                self.tiles[x,y] = Tile(False, self.block_size, x*self.block_size, y*self.block_size)
 
-    def get_map(self):
-        map = []
-        for tile in self.tiles:
-            tile_point = TilePoint((tile.x, tile.y), 1 if tile.solid else 0)
-            map.append(tile_point)
-        map = np.reshape(map, (self.width//self.block_size+1, self.height//self.block_size+1, -1))
-        return map
-
-    def get_checkpoints(self):
+    def get_checkpoints(self) -> []:
         checkpoints = []
-        for tile in self.tiles:
-            if tile.checkpoint:
-                checkpoints.append(Point(tile.x, tile.y))
+        for row in self.tiles:
+            for tile in row:
+                if tile.checkpoint:
+                    checkpoints.append(Point(tile.x, tile.y))
         return checkpoints
 
     def _get_game_state(self):
@@ -171,7 +176,6 @@ class Game:
                 self.block_size = load_data.get("block_size", 10)
                 self.tiles = load_data.get("tiles", [])
                 self.num_agents = load_data.get('num_agents', 10)
-                self.map = load_data.get('map', [])
                 self.checkpoints = load_data.get('checkpoints', [])
             print(f"Successfully loaded from {file_path}")
         except Exception as e:
@@ -184,9 +188,8 @@ class Game:
             self.clock.tick(100)
 
     def play_step(self):
-        self.sp_button_down_hover = self.sp_button_down.collidepoint(pygame.mouse.get_pos())
-        self.sp_button_up_hover = self.sp_button_up.collidepoint(pygame.mouse.get_pos())
-        self.stop_button_hover = self.stop_button.collidepoint(pygame.mouse.get_pos())
+        for button in self.buttons:
+            button.is_hovering(pygame.mouse.get_pos())
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -198,12 +201,9 @@ class Game:
                 quit()
 
         if pygame.mouse.get_pressed()[0]:
-                if self.sp_button_down.collidepoint(pygame.mouse.get_pos()):
-                    self._handle_sp_button_down()
-                elif self.sp_button_up.collidepoint(pygame.mouse.get_pos()):
-                    self._handle_sp_button_up()
-                elif self.stop_button.collidepoint(pygame.mouse.get_pos()):
-                    self._handle_stop()
+                for button in self.buttons:
+                    if (button.hover):
+                        self.button_actions[button]()
 
         
         if self.speed > 0:
@@ -270,8 +270,9 @@ class Game:
         pygame.display.flip()
 
     def _draw_background(self):
-        for tile in self.tiles:
-            pygame.draw.rect(self.game_board, tile.color, tile.rect)
+        for row in self.tiles:
+            for tile in row:
+                pygame.draw.rect(self.game_board, tile.color, tile.rect)
         for x in range(0, self.width, self.block_size):
             pygame.draw.line(
                 self.game_board, (255, 255, 255, 0), (x, 0), (x, self.height)
@@ -294,9 +295,9 @@ class Game:
         self._render_text(self.toolbar, str(self.speed), 40, (50, 115), BLACK)
 
     def _draw_clickable_buttons(self):
-        pygame.draw.rect(self.display, WHITE if self.sp_button_up_hover else BLUE1, self.sp_button_up )
-        pygame.draw.rect(self.display, WHITE if self.sp_button_down_hover else BLUE1, self.sp_button_down )
-        pygame.draw.rect(self.display, RED if self.stop_button_hover else BLUE1, self.stop_button)
+        for button in self.buttons:
+            pygame.draw.rect(self.display, button.color, button.rect)
+            self.display.blit(button.name, button.name_position)
 
 
 
@@ -309,10 +310,6 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
 
     game = Game(screen_width, screen_height)
-    game.load("pool")
-    print(game.get_map())
-    print(game.get_checkpoints())
-
     while True:
         game.play_step()
 

@@ -4,6 +4,7 @@ from tile import Tile
 from agent import Agent
 import numpy as np
 import pickle
+from button import Button 
 
 pygame.init()
 #font = pygame.font.Font('arial.ttf', 25)
@@ -11,7 +12,7 @@ font = pygame.font.SysFont('arial', 25)
 
     
 Point = namedtuple('Point', 'x, y')
-TilePoint = namedtuple('TilePoint', 'position, solid')
+
 
 WHITE = (255, 255, 255)
 RED = (200,0,0)
@@ -36,6 +37,9 @@ class GameLevelCreator:
         self.width = int((w-self.board_start-self.stats_width))
         self.height = int((h-2*self.board_start))
 
+        self.h = int(self.height/self.block_size)
+        self.w = int(self.width/self.block_size)
+
 
         # init display
         self.display = pygame.display.set_mode((self.screen_width, self.screen_height))
@@ -44,54 +48,47 @@ class GameLevelCreator:
         pygame.display.set_caption('GameLevelCreator')
         self.clock = pygame.time.Clock()
 
-        self.bs_button_up = pygame.Rect(self.screen_width-140, 100, 30, 20)
-        self.bs_button_up_hover = False
-        self.bs_button_down = pygame.Rect(self.screen_width-140, 130, 30, 20)
-        self.bs_button_down_hover = False
+        self.buttons = [
+            Button("Block size", self.screen_width-140, 100, 30, 20, BLUE1),
+            Button("Block_size_down", self.screen_width-140, 130, 30, 20, BLUE1, False),
+            Button("Agents num", self.screen_width-140, 180, 30, 20, BLUE1),
+            Button("Agents_num_down", self.screen_width-140, 210, 30, 20, BLUE1, False),
+            Button("Draw", self.screen_width-180, 280, 50, 50, RED),
+            Button("Erase", self.screen_width-180, 370, 50, 50, BLUE2),
+            Button("Create_check", self.screen_width-180, 460, 50, 50, GREEN),
+            Button("Save", self.screen_width-180, 550, 50, 50, RED),
+        ]
 
-        self.na_button_up = pygame.Rect(self.screen_width-140, 180, 30, 20)
-        self.na_button_up_hover = False
-        self.na_button_down = pygame.Rect(self.screen_width-140, 210, 30, 20)
-        self.na_button_down_hover = False
-
-        self.draw = pygame.Rect(self.screen_width-100, 260, 50, 50)
-
-        self.erase = pygame.Rect(self.screen_width-100, 340, 50, 50)
-
-        self.create_check = pygame.Rect(self.screen_width-100, 420, 50, 50)
-
-        self.save_btn = pygame.Rect(self.screen_width-100, 480, 50, 50)
-        self.save_btn_hover = False
+        self.button_actions = {
+            self.buttons[0]: self._handle_bs_button_up,
+            self.buttons[1]:self._handle_bs_button_down,
+            self.buttons[2]:self._handle_na_button_up,
+            self.buttons[3]:self._handle_na_button_down,
+            self.buttons[4]:self._handle_draw,
+            self.buttons[5]:self._handle_erase,
+            self.buttons[6]:self._handle_check,
+            self.buttons[7]:self._handle_save
+        }
 
         self.wall_state = 0
 
-        self.tiles = []
+        self.tiles = np.empty((self.w, self.h), dtype=object)
         self._setup()
 
-    def _setup(self):
-        for x in range(0, self.width, self.block_size):
-            for y in range(0, self.height, self.block_size):
-                self.tiles.append(Tile(False, self.block_size, x, y))
+    def _setup(self) -> None:
+        self.h = int(self.height/self.block_size)+1
+        self.w = int(self.width/self.block_size)+1
+        self.tiles = np.empty((self.w, self.h), dtype=object)
+        for x in range(0, self.w):
+            for y in range(0, self.h):
+                self.tiles[x,y] = Tile(False, self.block_size, x*self.block_size, y*self.block_size)
 
-    def _get_game_state(self):
-        return {
-            "block_size": self.block_size,
-            "layout": self.tiles
-        }
-    
-    def get_map(self):
-        map = []
-        for tile in self.tiles:
-            tile_point = TilePoint((tile.x, tile.y), 1 if tile.solid else 0)
-            map.append(tile_point)
-        map = np.reshape(map, (self.width//self.block_size+1, self.height//self.block_size+1, -1))
-        return map
-
-    def get_checkpoints(self):
+    def get_checkpoints(self) -> []:
         checkpoints = []
-        for tile in self.tiles:
-            if tile.checkpoint:
-                checkpoints.append(Point(tile.x, tile.y))
+        for row in self.tiles:
+            for tile in row:
+                if tile.checkpoint:
+                    checkpoints.append(Point(tile.x, tile.y))
         return checkpoints
     
     def save(self, savefile):
@@ -103,7 +100,6 @@ class GameLevelCreator:
                     'block_size' : self.block_size,
                     'tiles': self.tiles,
                     'num_agents': self.num_agents,
-                    'map': self.get_map(),
                     'checkpoints': self.get_checkpoints()
                 }
                 pickle.dump(save_data, file)
@@ -120,24 +116,16 @@ class GameLevelCreator:
                 self.block_size = load_data.get('block_size', 10)
                 self.tiles = load_data.get('tiles', [])
                 self.num_agents = load_data.get('num_agents', 10)
+                self.checkpoints = load_data.get('checkpoints', [])
             print(f'Successfully loaded from {file_path}')
         except Exception as e:
             print(f'Error loading from {file_path}: {e}')
 
 
     def play_step(self):
-        self.bs_button_down_hover = self.bs_button_down.collidepoint(pygame.mouse.get_pos())
-        self.bs_button_up_hover = self.bs_button_up.collidepoint(pygame.mouse.get_pos())
-        self.na_button_down_hover = self.na_button_down.collidepoint(pygame.mouse.get_pos())
-        self.na_button_up_hover = self.na_button_up.collidepoint(pygame.mouse.get_pos())
-        self.save_btn_hover = self.save_btn.collidepoint(pygame.mouse.get_pos())
 
-        if self.draw.collidepoint(pygame.mouse.get_pos()):
-            self.wall_state = 0
-        elif self.erase.collidepoint(pygame.mouse.get_pos()):
-            self.wall_state = 1
-        elif self.create_check.collidepoint(pygame.mouse.get_pos()):
-            self.wall_state = 2
+        for button in self.buttons:
+            button.is_hovering(pygame.mouse.get_pos())
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -145,38 +133,26 @@ class GameLevelCreator:
                 quit()
 
         keys = pygame.key.get_pressed()
-        if keys[pygame.K_s]: #@TODO: do it properly
+        if keys[pygame.K_s]:
             self.save("pool")
         elif keys[pygame.K_q]:
             pygame.quit()
             quit()
         elif pygame.mouse.get_pressed()[0]:
-            for tile in self.tiles:
-                (x, y) = pygame.mouse.get_pos()
-                if tile.rect.collidepoint((x-50, y-50)):
-                    if self.wall_state == 0:
-                        tile.change_solid()
-                    elif self.wall_state == 2:
-                        tile.change_checkpoint()
-                    else:
-                        tile.change_not_solid()
-            if self.bs_button_down.collidepoint(pygame.mouse.get_pos()):
-                self._handle_bs_button_down()
-            elif self.bs_button_up.collidepoint(pygame.mouse.get_pos()):
-                self._handle_bs_button_up()
-            if self.na_button_down.collidepoint(pygame.mouse.get_pos()):
-                self._handle_na_button_down()
-            elif self.na_button_up.collidepoint(pygame.mouse.get_pos()):
-                self._handle_na_button_up()
-            elif self.save_btn.collidepoint(pygame.mouse.get_pos()):
-                self.save("test")
-
-        elif pygame.mouse.get_pressed()[2]:
-            for tile in self.tiles:
-                (x, y) = pygame.mouse.get_pos()
-                if tile.rect.collidepoint((x-50, y-50)):
+            (x, y) = pygame.mouse.get_pos()
+            x, y = int((x-50)/self.block_size), int((y-50)/self.block_size)
+            if (x < self.w and y < self.h):
+                tile = self.tiles[x, y]
+                if self.wall_state == 0:
+                    tile.change_solid()
+                elif self.wall_state == 2:
+                    tile.change_checkpoint()
+                else:
                     tile.change_not_solid()
-                
+            for button in self.buttons:
+                if (button.hover):
+                    self.button_actions[button]()
+     
         self._update_ui()
         self.clock.tick(SPEED)
         
@@ -198,6 +174,18 @@ class GameLevelCreator:
     def _handle_na_button_down(self):
         if self.num_agents > 2:
             self.num_agents -= 1
+
+    def _handle_draw(self):
+        self.wall_state = 0
+    
+    def _handle_erase(self):
+        self.wall_state = 1
+    
+    def _handle_check(self):
+        self.wall_state = 2
+
+    def _handle_save(self):
+        self.save()
     
     def _render_text(self, surface, text, font_size, position, color):
         font = pygame.font.Font(None, font_size)
@@ -215,8 +203,9 @@ class GameLevelCreator:
         pygame.display.flip()
 
     def _draw_background(self):
-        for tile in self.tiles:
-            pygame.draw.rect(self.game_board, tile.color, tile.rect)
+        for row in self.tiles:
+            for tile in row:
+                pygame.draw.rect(self.game_board, tile.color, tile.rect)
         for x in range(0,   self.width, self.block_size):
             pygame.draw.line(self.game_board, (255, 255, 255, 0), (x, 0), ( x,  self.height))
         for y in range(0,  self.height, self.block_size):
@@ -229,22 +218,9 @@ class GameLevelCreator:
         self._render_text(self.toolbar, str(self.num_agents), 40, (50, 195), BLACK)
 
     def _draw_clickable_buttons(self):
-        self._render_text(self.display, "Tile size", 30, (self.screen_width-200, 70), WHITE)
-        pygame.draw.rect(self.display, WHITE if self.bs_button_up_hover else BLUE1, self.bs_button_up )
-        pygame.draw.rect(self.display, WHITE if self.bs_button_down_hover else BLUE1, self.bs_button_down )
-        self._render_text(self.display, "Number of agents", 30, (self.screen_width-200, 160), WHITE)
-        pygame.draw.rect(self.display, WHITE if self.na_button_up_hover else BLUE1,   self.na_button_up )
-        pygame.draw.rect(self.display, WHITE if self.na_button_down_hover else BLUE1, self.na_button_down )
-
-        self._render_text(self.display, "Wall", 30, (self.screen_width-230, 280), WHITE)
-        pygame.draw.rect(self.display, RED, self.draw)
-        self._render_text(self.display, "Erase all", 30, (self.screen_width-230, 360), WHITE)
-        pygame.draw.rect(self.display, BLUE2, self.erase)
-        self._render_text(self.display, "Checkpoint", 30, (self.screen_width-230, 440), WHITE)
-        pygame.draw.rect(self.display, GREEN, self.create_check)
-
-        self._render_text(self.display, "Save", 30, (self.screen_width-230, 500), WHITE)
-        pygame.draw.rect(self.display, GREEN, self.save_btn)
+        for button in self.buttons:
+            pygame.draw.rect(self.display, button.color, button.rect)
+            self.display.blit(button.name, button.name_position)
 
 
         
