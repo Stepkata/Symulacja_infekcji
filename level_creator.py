@@ -185,7 +185,7 @@ class GameLevelCreator:
         self.wall_state = 2
 
     def _handle_save(self):
-        self.save()
+        self.save("test")
     
     def _render_text(self, surface, text, font_size, position, color):
         font = pygame.font.Font(None, font_size)

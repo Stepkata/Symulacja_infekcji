@@ -7,6 +7,7 @@ import pickle
 import random
 from infectionSpread import InfectionSpread
 from button import Button 
+import Controller
 
 pygame.init()
 # font = pygame.font.Font('arial.ttf', 25)
@@ -82,41 +83,11 @@ class Game:
         # self.agent = Agent(
         #     self.block_size // 2 + 500, self.block_size // 2 + 250, "u"
         # )
-
         #ID agentow
         self.agent_id = 0
-
-        infected_agent = Agent(
-            self.agent_id,
-            self.block_size // 2 + 500,
-            self.block_size // 2 + 250,
-            "u",
-            RED,
-            True
-        )
-        self.agents.append(infected_agent)
-        self.infected_agents.append(infected_agent)
-        
-        self.agent_id += 1
-        
-        for _ in range(self.num_agents):
-            new_agent = Agent(
-                self.agent_id,
-                self.block_size // 2 + 500,
-                self.block_size // 2 + 250,
-                "u",
-                WHITE,
-                False
-            )
-            self.agents.append(new_agent)
-            self.agent_id += 1
-
-        self._place_agents_randomly(
-            self.board_start, self.board_start, self.width, self.height
-        )
-
         self.infection_spread = InfectionSpread(self.block_size)
         self._setup()
+        self._generate_agents()
 
     def _place_agents_randomly(self, start_x, start_y, end_x, end_y):
         squares = []
@@ -141,6 +112,39 @@ class Game:
         for x in range(0, self.w):
             for y in range(0, self.h):
                 self.tiles[x,y] = Tile(False, self.block_size, x*self.block_size, y*self.block_size)
+
+    def _generate_agents(self):
+        infected_agent = Agent(
+            self.agent_id,
+            self.block_size // 2 + 500,
+            self.block_size // 2 + 250,
+            "u",
+            RED,
+            True,
+            Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+        )
+        self.agents.append(infected_agent)
+        self.infected_agents.append(infected_agent)
+        
+        self.agent_id += 1
+        
+        for _ in range(self.num_agents):
+            new_agent = Agent(
+                self.agent_id,
+                self.block_size // 2 + 500,
+                self.block_size // 2 + 250,
+                "u",
+                WHITE,
+                False,
+                Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+            )
+            self.agents.append(new_agent)
+            self.agent_id += 1
+
+        self._place_agents_randomly(
+            self.board_start, self.board_start, self.width, self.height
+        )
+
 
     def get_checkpoints(self) -> []:
         checkpoints = []
@@ -207,16 +211,8 @@ class Game:
 
         
         if self.speed > 0:
-            sim_mode = 1
-            # if sim_mode:
-            #     self.agent._run_controller()
-            if sim_mode:
-                for agent in self.agents:
-                    agent._set_agents_array(self.agents)
-                    agent._set_dimensions(
-                        self.width, self.height, self.block_size
-                    )
-                    agent._run_controller()
+            for agent in self.agents:
+                agent._run_controller()
 
             #Zbieranie sąsiadów 
             for infected_agent in self.infected_agents:
@@ -310,6 +306,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
 
     game = Game(screen_width, screen_height)
+    game.load("test")
     while True:
         game.play_step()
 

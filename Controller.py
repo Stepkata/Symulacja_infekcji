@@ -5,16 +5,15 @@ import AStar
 
 class IndividualController:
     """A controller class to simulate random movement"""
-    def __init__(self, agent):
-        self.agent = agent
-        self.width = None
-        self.height = None
-        self.block_size = None
-        self.agents_array = None
-        pass
+    def __init__(self, width, height, block_size, tiles):
+        self.agent = None
+        self.width = width
+        self.height = height
+        self.block_size = block_size
+        self.tiles = tiles
 
     def _step(self):
-        if self.width is None or self.height is None or self.block_size is None or self.agents_array is None:
+        if self.agent is None:
             raise ValueError("Wymiary planszy lub tablica agentów nie zostały ustawione")
 
         rand_dir = random.randint(1, 4)
@@ -39,18 +38,14 @@ class IndividualController:
             if new_y < 0:
                 new_y = self.agent.y + step_size
 
-    
-        # Sprawdzenie kolizji z innymi agentami
-        collides_with_other_agents = any(
-            (
-                agent != self.agent and
-                new_x - self.block_size // 2 < agent.x < new_x + self.block_size // 2 and
-                new_y - self.block_size // 2 < agent.y < new_y + self.block_size // 2
-            )
-            for agent in self.agents_array
-        )
 
-        if not collides_with_other_agents:
+        collision = False
+        x, y = int((new_x-50)/self.block_size), int((new_y-50)/self.block_size)
+        (w, h) = self.tiles.shape
+        if (x < w and y < h):
+                tile = self.tiles[x, y]
+                collision = tile.solid
+        if not collision:
             self.agent.x, self.agent.y = new_x, new_y
 
     @staticmethod
@@ -63,14 +58,6 @@ class IndividualController:
             return False
         
         return True
-    
-    def _set_dimensions(self, width, height, block_size):
-        self.width = width
-        self.height = height
-        self.block_size = block_size
-
-    def _set_agents_array(self, agents_array):
-        self.agents_array = agents_array
         
 
 class CrowdController:
