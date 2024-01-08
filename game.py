@@ -117,7 +117,7 @@ class Game:
             "u",
             RED,
             True,
-            Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+            Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 30)
         )
         self.agents.append(infected_agent)
         self.infected_agents.append(infected_agent)
@@ -132,7 +132,7 @@ class Game:
                 "u",
                 WHITE,
                 False,
-                Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+                Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 30)
             )
             self.agents.append(new_agent)
             self.agent_id += 1
@@ -288,7 +288,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
 
     game = Game(screen_width, screen_height)
-    game.load("pool")
+    game.load("test")
     while True:
         game.play_step()
 

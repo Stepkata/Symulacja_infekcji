@@ -1,7 +1,9 @@
 import pygame
 import random
-import AStar
-
+from astar import Astar
+from agent import Agent
+from tile import Tile
+import numpy as np
 
 class IndividualController:
     """A controller class to simulate random movement"""
@@ -11,13 +13,10 @@ class IndividualController:
         self.height = height
         self.block_size = block_size
         self.tiles = tiles
-        for x, row in enumerate(self.tiles):
-            for y, t in enumerate(row):
-                print(x, y, t.solid)
 
     def _step(self):
         if self.agent is None:
-            raise ValueError("Wymiary planszy lub tablica agentów nie zostały ustawione")
+            raise ValueError("tablica agentów nie zostały ustawione")
 
         rand_dir = random.randint(1, 4)
         step_size = self.block_size
@@ -73,55 +72,53 @@ class CrowdController:
 
 
 class CheckpointController:
-    def __init__(self, agent, tiles, checkpoints, wait_time) -> None:
-        self.agent = agent
-        self.map = map
-        self.width = None
-        self.height = None
-        self.block_size = None
-        self.agents_array = None
+    def __init__(self, width, height, block_size, tiles, checkpoints, wait_time) -> None:
+        self.agent: Agent = None
+        self.tiles: Tile = tiles
+        self.width: int = width
+        self.height: int = height
+        self.block_size: int = block_size
 
-        self.checkpoints = self._random_subarray(checkpoints, random.randint(1, len(checkpoints)))
-        self.waiting = 0
-        self.wait_time = wait_time
+        self.checkpoints: list = checkpoints #self._random_subarray(checkpoints, random.randint(1, len(checkpoints)))
+        self.waiting: int = 0
+        self.wait_time: int = wait_time
 
-        self.astar = AStar(self.map)
+        self.astar = Astar(self.get_map())
         self.path = []
 
+    def get_map(self):
+        map = np.zeros(self.tiles.shape)
+        for x, row in enumerate(self.tiles):
+            for y, tile in enumerate(row):
+                map[x, y] = 1 if tile.solid else 0
+        print(map)
+        return map
 
     def _step(self):
+        if self.agent is None:
+            raise ValueError("tablica agentów nie zostały ustawione")
+
         if (self.waiting > 0): #doing task in the checkpoint
             self.waiting -= 1
             if (self.waiting == 1): #finding best path to the next checkpoint
                 next_check = random.choice(self.checkpoints)
-                self.astar.set_endpoints(self.agent.position, next_check)
-                self.path = self.astar.astar()
+                check_position = (next_check.x//self.block_size, next_check.y//self.block_size)
+                agent_position = (self.agent.x//self.block_size, self.agent.y//self.block_size)
+                print(check_position)
+                print(agent_position)
+                if check_position == agent_position:
+                    self.path = []
+                else:
+                    self.astar.set_endpoints(agent_position, check_position)
+                    self.path = self.astar.astar()
+                    print(self.path)
         else:
             if(len(self.path) > 0): #going to the checkpoint
                 next_move = self.path.pop(0)
-                self.agent.x, self.agent.y = next_move[0], next_move[1]
+                self.agent.x, self.agent.y = (next_move[0]*self.block_size)+self.block_size//2, (next_move[1]*self.block_size)+self.block_size//2
             else:
                 self.waiting = self.wait_time #checkpoint reached, task time
 
-
-    @staticmethod
-    def is_within_screen_bounds(new_x, new_y, width, height, block_size) -> bool:
-        half_block_size = block_size // 2
-
-        if new_x  < 0 or new_x + half_block_size > width:
-            return False
-        if new_y - half_block_size < 0 or new_y + half_block_size > height:
-            return False
-        
-        return True
-    
-    def _set_dimensions(self, width, height, block_size) -> None:
-        self.width = width
-        self.height = height
-        self.block_size = block_size
-
-    def _set_agents_array(self, agents_array) -> None:
-        self.agents_array = agents_array
     
     def _random_subarray(array, subarray_length):
         if subarray_length > len(array):
