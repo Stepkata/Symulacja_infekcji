@@ -11,6 +11,9 @@ class IndividualController:
         self.height = height
         self.block_size = block_size
         self.tiles = tiles
+        for x, row in enumerate(self.tiles):
+            for y, t in enumerate(row):
+                print(x, y, t.solid)
 
     def _step(self):
         if self.agent is None:
@@ -40,11 +43,12 @@ class IndividualController:
 
 
         collision = False
-        x, y = int((new_x-50)/self.block_size), int((new_y-50)/self.block_size)
+        x, y = int((new_x)/self.block_size), int((new_y)/self.block_size)
         (w, h) = self.tiles.shape
         if (x < w and y < h):
                 tile = self.tiles[x, y]
-                collision = tile.solid
+                collision = tile.solid  
+            
         if not collision:
             self.agent.x, self.agent.y = new_x, new_y
 

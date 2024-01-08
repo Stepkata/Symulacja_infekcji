@@ -73,7 +73,7 @@ class Game:
         }
 
         #Ilość agentów
-        self.num_agents = 10
+        self.num_agents = 1
         #Agenci
         self.agents = []
         #Zainfekopwani agenci
@@ -96,7 +96,7 @@ class Game:
 
     def _change_agent_color(self, agent):
         if agent in self.infected_agents:
-            agent.color = RED
+            agent.color = BLACK
 
 
     def _setup(self) -> None:
@@ -108,6 +108,8 @@ class Game:
                 self.tiles[x,y] = Tile(False, self.block_size, x*self.block_size, y*self.block_size)
 
     def _generate_agents(self):
+        self.agents = []
+        self.infected_agents = []
         infected_agent = Agent(
             self.agent_id,
             self.block_size // 2 + 500,
@@ -150,9 +152,9 @@ class Game:
         return {"block_size": self.block_size, "layout": self.tiles}
 
     def load(self, savefile):
-        file_path = "saves/"+savefile
+        file_path = "saves/"+savefile+".dat.npy"
         try:
-            load_data = np.load('saves/data.dat.npy',  allow_pickle=True)
+            load_data = np.load( file_path ,  allow_pickle=True)
             print(load_data[()]['block_size'])
             self.block_size = load_data[()]['block_size']
             self.h = int(self.height/self.block_size)+1
@@ -160,6 +162,7 @@ class Game:
             self.tiles = load_data[()]['tiles']
             self.num_agents = load_data[()]['num_agents']
             self.checkpoints =load_data[()]['checkpoints']
+            self._generate_agents()
             print(f'Successfully loaded from {file_path}')
         except Exception as e:
             print(f'Error loading from {file_path}: {e}')
@@ -285,7 +288,7 @@ if __name__ == "__main__":
     screen = pygame.display.set_mode((screen_width, screen_height))
 
     game = Game(screen_width, screen_height)
-    game.load("test")
+    game.load("pool")
     while True:
         game.play_step()
 

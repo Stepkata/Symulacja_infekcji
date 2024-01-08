@@ -92,19 +92,15 @@ class GameLevelCreator:
         return checkpoints
     
     def save(self, savefile):
-        file_path = "saves/"+savefile
+        file_path = "saves/"+savefile+".dat"
         try:
-            with open(file_path, 'wb') as file:
-                # Serialize the necessary data using pickle
-                print(self.tiles.shape)
-                save_data = {
-                    'block_size' : self.block_size,
-                    'num_agents': self.num_agents,
-                    'tiles': self.tiles,
-                    'checkpoints': self.get_checkpoints()
-                }
-                np.save('saves/data.dat', save_data, allow_pickle=True)
-                pickle.dump(save_data, file)
+            save_data = {
+                'block_size' : self.block_size,
+                'num_agents': self.num_agents,
+                'tiles': self.tiles,
+                'checkpoints': self.get_checkpoints()
+            }
+            np.save(file_path, save_data, allow_pickle=True)
             print(f'Successfully saved to {file_path}')
         except Exception as e:
             print(f'Error saving to {file_path}: {e}')
