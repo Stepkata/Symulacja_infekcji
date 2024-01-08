@@ -96,30 +96,18 @@ class GameLevelCreator:
         try:
             with open(file_path, 'wb') as file:
                 # Serialize the necessary data using pickle
+                print(self.tiles.shape)
                 save_data = {
                     'block_size' : self.block_size,
-                    'tiles': self.tiles,
                     'num_agents': self.num_agents,
+                    'tiles': self.tiles,
                     'checkpoints': self.get_checkpoints()
                 }
+                np.save('saves/data.dat', save_data, allow_pickle=True)
                 pickle.dump(save_data, file)
             print(f'Successfully saved to {file_path}')
         except Exception as e:
             print(f'Error saving to {file_path}: {e}')
-
-    def load(self, savefile):
-        file_path = "saves/"+savefile
-        try:
-            with open(file_path, 'rb') as file:
-                # Deserialize the data using pickle
-                load_data = pickle.load(file)
-                self.block_size = load_data.get('block_size', 10)
-                self.tiles = load_data.get('tiles', [])
-                self.num_agents = load_data.get('num_agents', 10)
-                self.checkpoints = load_data.get('checkpoints', [])
-            print(f'Successfully loaded from {file_path}')
-        except Exception as e:
-            print(f'Error loading from {file_path}: {e}')
 
 
     def play_step(self):

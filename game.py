@@ -89,16 +89,10 @@ class Game:
         self._setup()
         self._generate_agents()
 
-    def _place_agents_randomly(self, start_x, start_y, end_x, end_y):
-        squares = []
-        for x in range(start_x + self.block_size // 2, end_x, self.block_size):
-            for y in range(start_y + self.block_size // 2, end_y, self.block_size):
-                squares.append((x, y))
-
+    def _place_agents_randomly(self):
         for agent in self.agents:
-            selected_square = random.choice(squares)
-            agent.x, agent.y = selected_square
-            squares.remove(selected_square)
+            (X, Y) = self.tiles.shape
+            agent.x, agent.y = random.randint(0, X)*self.block_size + self.block_size//2, random.randint(0, Y)*self.block_size+self.block_size//2
 
     def _change_agent_color(self, agent):
         if agent in self.infected_agents:
@@ -141,9 +135,7 @@ class Game:
             self.agents.append(new_agent)
             self.agent_id += 1
 
-        self._place_agents_randomly(
-            self.board_start, self.board_start, self.width, self.height
-        )
+        self._place_agents_randomly()
 
 
     def get_checkpoints(self) -> []:
@@ -157,33 +149,20 @@ class Game:
     def _get_game_state(self):
         return {"block_size": self.block_size, "layout": self.tiles}
 
-    def save(self, savefile):
-        file_path = "saves/" + savefile
-        try:
-            with open(file_path, "wb") as file:
-                # Serialize the necessary data using pickle
-                save_data = {
-                    "block_size": self.block_size,
-                    "tiles": self.tiles,
-                }
-                pickle.dump(save_data, file)
-            print(f"Successfully saved to {file_path}")
-        except Exception as e:
-            print(f"Error saving to {file_path}: {e}")
-
     def load(self, savefile):
-        file_path = "saves/" + savefile
+        file_path = "saves/"+savefile
         try:
-            with open(file_path, "rb") as file:
-                # Deserialize the data using pickle
-                load_data = pickle.load(file)
-                self.block_size = load_data.get("block_size", 10)
-                self.tiles = load_data.get("tiles", [])
-                self.num_agents = load_data.get('num_agents', 10)
-                self.checkpoints = load_data.get('checkpoints', [])
-            print(f"Successfully loaded from {file_path}")
+            load_data = np.load('saves/data.dat.npy',  allow_pickle=True)
+            print(load_data[()]['block_size'])
+            self.block_size = load_data[()]['block_size']
+            self.h = int(self.height/self.block_size)+1
+            self.w = int(self.width/self.block_size)+1
+            self.tiles = load_data[()]['tiles']
+            self.num_agents = load_data[()]['num_agents']
+            self.checkpoints =load_data[()]['checkpoints']
+            print(f'Successfully loaded from {file_path}')
         except Exception as e:
-            print(f"Error loading from {file_path}: {e}")
+            print(f'Error loading from {file_path}: {e}')
 
 
     def step_machine(self, sim_steps):
