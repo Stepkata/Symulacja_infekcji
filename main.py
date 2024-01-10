@@ -5,12 +5,26 @@ from pygame_menu import themes
 from level_creator import GameLevelCreator
 from game import Game
 import os
+import pygame_menu as pm 
 
+
+RED = (255, 0, 0) 
+GREEN = (0, 255, 0) 
+BLUE = (0, 0, 255) 
+CYAN = (0, 100, 100) 
+BLACK = (0, 0, 0) 
+WHITE = (255, 255, 255) 
 
 pygame.init()
 surface = pygame.display.set_mode((1400, 750))
 game = Game()
 level_creator = GameLevelCreator()
+
+controllers = [
+        ("Random", 'random'),
+        ("Checkpoint", 'checkpoint'),
+        ("Herd", 'herd')
+    ]
 
 
 def set_level(value, level):
@@ -23,6 +37,8 @@ def set_level(value, level):
 def start_the_game():
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30)
+    settingsData = settings.get_input_data() 
+    print(settingsData)
     game.step_machine(10000)
     while True:
         game.play_step()
@@ -31,6 +47,7 @@ def start_the_game():
 def start_the_level_creator():
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30)
+    settingsData = settings.get_input_data() 
     while True:
         level_creator.play_step()
 
@@ -53,10 +70,39 @@ def get_saved_levels():
         return []
 
 
+settings = pm.Menu(title="Settings", 
+                       width=1400,
+                       height=750, 
+                       theme=pm.themes.THEME_GREEN) 
+  
+    # Adjusting the default values 
+settings._theme.widget_font_size = 25
+settings._theme.widget_font_color = BLACK 
+settings._theme.widget_alignment = pm.locals.ALIGN_LEFT 
+
+# Text input that takes in the username 
+settings.add.text_input(title="User Name : ", textinput_id="username", default='user') 
+settings.add.text_input(title="R_0: ", textinput_id="r0", default=2)
+settings.add.dropselect(title="Controller", items=controllers, 
+                        dropselect_id="controller", default='random') 
+settings.add.range_slider(title="Number of agents", default=60, range_values=( 
+    2, 100), increment=1, value_format=lambda x: str(int(x)), rangeslider_id="agents_num") 
+settings.add.range_slider(title="Block_size", default=60, range_values=( 
+    10, 200), increment=1, value_format=lambda x: str(int(x)), rangeslider_id="block_size") 
+
+settings.add.button(title="Restore Defaults", action=settings.reset_value, 
+                    font_color=WHITE, background_color=RED)
+settings.add.button(title="Return To Main Menu", 
+                    action=pm.events.BACK, align=pm.locals.ALIGN_CENTER) 
+
+
 mainmenu = pygame_menu.Menu("Welcome", 1400, 750, theme=themes.THEME_DARK)
-#mainmenu.add.text_input("Name: ", default="username")
 mainmenu.add.button("Play", start_the_game)
 mainmenu.add.button("Level creator", start_the_level_creator)
+mainmenu.add.button(title="Simulation settings", action=settings) 
+mainmenu.add.button(title="Exit", action=pm.events.EXIT) 
+
+
 levels = get_saved_levels()
 levels.insert(0, ("Empty", 0))
 print(levels)

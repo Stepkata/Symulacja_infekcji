@@ -97,6 +97,9 @@ class CheckpointController:
     def _step(self):
         if self.agent is None:
             raise ValueError("tablica agentów nie zostały ustawione")
+        
+        if len(self.checkpoints)==0:
+            return
 
         if (self.waiting > 0): #doing task in the checkpoint
             self.waiting -= 1
