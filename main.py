@@ -84,7 +84,7 @@ settings._theme.widget_alignment = pm.locals.ALIGN_LEFT
 settings.add.text_input(title="User Name : ", textinput_id="username", default='user') 
 settings.add.text_input(title="R_0: ", textinput_id="r0", default=2)
 settings.add.dropselect(title="Controller", items=controllers, 
-                        dropselect_id="controller", default='random') 
+                        dropselect_id="controller", default=0) 
 settings.add.range_slider(title="Number of agents", default=60, range_values=( 
     2, 100), increment=1, value_format=lambda x: str(int(x)), rangeslider_id="agents_num") 
 settings.add.range_slider(title="Block_size", default=60, range_values=( 
