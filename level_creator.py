@@ -73,6 +73,7 @@ class GameLevelCreator:
         self.wall_state = 0
 
         self.tiles = np.empty((self.w, self.h), dtype=object)
+        self.checkpoints = []
         self._setup()
 
     def _setup(self) -> None:
@@ -116,7 +117,6 @@ class GameLevelCreator:
             self.tiles = load_data[()]['tiles']
             self.num_agents = load_data[()]['num_agents']
             self.checkpoints =load_data[()]['checkpoints']
-            self._generate_agents()
             print(f'Successfully loaded from {file_path}')
         except Exception as e:
             print(f'Error loading from {file_path}: {e}')

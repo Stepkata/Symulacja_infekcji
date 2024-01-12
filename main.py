@@ -56,7 +56,7 @@ def get_saved_levels():
     directory_path = "saves"
     try:
         files = [
-            f
+            f.replace(".dat.npy", "")
             for f in os.listdir(directory_path)
             if os.path.isfile(os.path.join(directory_path, f))
         ]
