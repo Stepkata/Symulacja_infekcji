@@ -105,6 +105,22 @@ class GameLevelCreator:
         except Exception as e:
             print(f'Error saving to {file_path}: {e}')
 
+    def load(self, savefile):
+        file_path = "saves/"+savefile+".dat.npy"
+        try:
+            load_data = np.load( file_path ,  allow_pickle=True)
+            print(load_data[()]['block_size'])
+            self.block_size = load_data[()]['block_size']
+            self.h = int(self.height/self.block_size)+1
+            self.w = int(self.width/self.block_size)+1
+            self.tiles = load_data[()]['tiles']
+            self.num_agents = load_data[()]['num_agents']
+            self.checkpoints =load_data[()]['checkpoints']
+            self._generate_agents()
+            print(f'Successfully loaded from {file_path}')
+        except Exception as e:
+            print(f'Error loading from {file_path}: {e}')
+
 
     def play_step(self):
 
