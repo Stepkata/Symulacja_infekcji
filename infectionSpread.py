@@ -20,6 +20,9 @@ class InfectionSpread():
 
             if distance <= 1.41*self.block_size:
                 neighbors.append(other_agent)
+            if distance <= 2.8*self.block_size:
+                if random.uniform(0, 1) < 0.5:
+                    neighbors.append(other_agent)
         return neighbors
 
     def get_distance(self, x1, y1, x2, y2):
@@ -35,18 +38,20 @@ class InfectionSpread():
         return abs(agent1.y - agent2.y)
     
     
-    def _spread_infection(self, potential_infection, infection_probability=0.2, reinfection_probability = 0.05):
+    def _spread_infection(self, potential_infection, num_infected, r0=2, reinfection_probability = 0.05):
         new_infected_agents = []
-
-        for agent in potential_infection:
-            if random.uniform(0, 1) < infection_probability:
-                    if agent.cured:
-                        if random.uniform(0, 1) < reinfection_probability:
-                            new_infected_agents.append(agent)
-                            agent.infected = True
-                    else:
-                        new_infected_agents.append(agent)
-                        agent.infected = True
+        if len(potential_infection) == 0:
+            return new_infected_agents
+        sample_size = num_infected*r0 if num_infected*r0 < len( potential_infection) else len(potential_infection)-1
+        chosen = random.sample(list(potential_infection), sample_size )
+        for agent in chosen:
+            if agent.cured:
+                if random.uniform(0, 1) < reinfection_probability:
+                    new_infected_agents.append(agent)
+                    agent.infected = True
+            else:
+                new_infected_agents.append(agent)
+                agent.infected = True
 
         return new_infected_agents
         

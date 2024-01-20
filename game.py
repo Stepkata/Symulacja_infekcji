@@ -219,7 +219,7 @@ class Game:
 
             if self.time % 10 == 0:
                 self.time = 0 
-                self.infected_agents += self.infection_spread._spread_infection( self.potentially_infected, 0.8)
+                self.infected_agents += self.infection_spread._spread_infection( self.potentially_infected, len(self.infected_agents))
                 self.potentially_infected = []
         
 
