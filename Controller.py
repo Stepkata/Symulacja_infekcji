@@ -45,7 +45,7 @@ class IndividualController:
     
     def normalise(self, x, max):
         if x < 0:
-            return 0
+            return self.block_size//2
         if x > max:
             return max - self.block_size//2
         return x
@@ -139,7 +139,7 @@ class CrowdController:
 
     def normalise(self, x, max):
         if x < 0:
-            return 0
+            return self.block_size//2
         if x > max:
             return max - self.block_size//2
         return x
