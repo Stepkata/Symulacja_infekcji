@@ -104,25 +104,14 @@ class Game:
         self._setup()
         self._generate_agents()
 
-    def spawn_controller(self) -> Controller:
-        agent_controller = None
 
-        if self.controller == "checkpoints":
-            agent_controller = Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 100)
-        elif self.controller == "herd":
-            agent_controller = Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)   
-        elif self.controller == "random":
-            agent_controller = Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
-
-        if agent_controller is not None:
-            return Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
-        return agent_controller
-        
     def generate_and_save_plots(self):
         # Generowanie wykresu
         plt.figure(figsize=(10, 6))
-        plt.plot(self.infected_counts, label='Zarażeni')
-        plt.plot(self.cured_counts, label='Wyzdrowiali')
+        healthy_counts = [self.num_agents - infected_count - cured_count for infected_count, cured_count in zip(self.infected_counts, self.cured_counts)]
+        plt.plot(self.infected_counts, label='Zarażeni', color='red')
+        plt.plot(self.cured_counts, label='Wyzdrowiali', color='green')
+        plt.plot(healthy_counts, label='Zdrowi', color='blue')
         plt.xlabel('Krok czasowy')
         plt.ylabel('Liczba agentów')
         plt.title('Dynamika zarażeń i wyzdrowień')
