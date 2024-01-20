@@ -72,6 +72,7 @@ class Game:
             self.buttons[2]:self._handle_stop,
         }
 
+        self.controller = "crowd"
         #Ilość agentów
         self.num_agents = 1
         #Agenci
@@ -117,7 +118,7 @@ class Game:
             "u",
             RED,
             True,
-            Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 30)
+            Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)
         )
         self.agents.append(infected_agent)
         self.infected_agents.append(infected_agent)
@@ -132,12 +133,16 @@ class Game:
                 "u",
                 WHITE,
                 False,
-                Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 30)
+                Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)
             )
             self.agents.append(new_agent)
             self.agent_id += 1
 
         self._place_agents_randomly()
+
+        if self.controller == "crowd":
+            for agent in self.agents:
+                agent.controller.agents_array = self.agents
 
 
     def get_checkpoints(self) -> []:

@@ -4,6 +4,7 @@ from astar import Astar
 from agent import Agent
 from tile import Tile
 import numpy as np
+import math
 
 class IndividualController:
     """A controller class to simulate random movement"""
@@ -24,22 +25,107 @@ class IndividualController:
         new_x, new_y = self.agent.x, self.agent.y
 
         if rand_dir == 1:
-            new_x = (self.agent.x + step_size) 
-            if new_x > self.width:
-                new_x = self.width - self.block_size // 2
+            new_x = self.normalise(self.agent.x + step_size, self.width) 
         elif rand_dir == 2:
-            new_y = (self.agent.y + step_size) 
-            if new_y > self.height:
-                new_y = self.height - self.block_size // 2
+            new_y = self.normalise(self.agent.y + step_size, self.height) 
         elif rand_dir == 3:
-            new_x = (self.agent.x - step_size) 
-            if new_x <0:
-                new_x = self.agent.x + step_size
+            new_x = self.normalise(self.agent.x - step_size, self.width) 
         elif rand_dir == 4:
-            new_y = (self.agent.y - step_size) 
-            if new_y < 0:
-                new_y = self.agent.y + step_size
+            new_y = self.normalise(self.agent.y - step_size, self.height) 
 
+        collision = False
+        x, y = int((new_x)/self.block_size), int((new_y)/self.block_size)
+        (w, h) = self.tiles.shape
+        if (x < w and y < h):
+                tile = self.tiles[x, y]
+                collision = tile.solid  
+            
+        if not collision:
+            self.agent.x, self.agent.y = new_x, new_y
+    
+    def normalise(self, x, max):
+        if x < 0:
+            return 0
+        if x > max:
+            return max - self.block_size//2
+        return x
+        
+
+class CrowdController:
+    def __init__(self, width, height, block_size, tiles):
+        self.agents_array = None
+        self.agent = None
+        self.width = width
+        self.height = height
+        self.block_size = block_size
+        self.tiles = tiles
+        self.line_of_sight = 5*self.block_size
+
+    def _step(self):
+        if self.agent is None:
+            raise ValueError("tablica agentów nie zostały ustawione")
+        
+        path = random.randint(1, 10)
+        if path >= 4:
+            self._go_radom()
+        else:
+            self.follow_nearest()
+
+    def follow_nearest(self):
+        to_follow = None
+        distance = self.height*self.width
+        for agent in self.agents_array:
+            if (self.agent.x - self.line_of_sight <= agent.x <= self.agent.x + self.line_of_sight and 
+                self.agent.y - self.line_of_sight <= agent.y <= self.agent.y + self.line_of_sight):
+                dist_to_agent = self.get_distance(agent.x, agent.y)
+                if (dist_to_agent < distance and dist_to_agent > 0):
+                    to_follow = agent
+                    distance = dist_to_agent
+        if (to_follow is None):
+            self._go_radom()
+        else:
+            new_x = self.normalise(self.agent.x + self.relu(self.agent.x, to_follow.x), self.width)
+            new_y = self.normalise(self.agent.y + self.relu(self.agent.y, to_follow.y), self.height)
+            if new_x == to_follow.x:
+                new_x = self.agent.x
+            if new_y == to_follow.y:
+                new_y = self.agent.y
+            collision = False
+            x, y = int((new_x)/self.block_size), int((new_y)/self.block_size)
+            (w, h) = self.tiles.shape
+            if (x < w and y < h):
+                    tile = self.tiles[x, y]
+                    collision = tile.solid  
+                
+            if not collision:
+                self.agent.x, self.agent.y = new_x, new_y
+
+
+    def relu(self, x1, x2):
+        if x2 > x1:
+            return self.block_size
+        elif x2 == x1:
+            return 0
+        else:
+            return -self.block_size
+
+    def get_distance(self, x, y):
+        return math.sqrt(math.pow(x - self.agent.x, 2) + math.pow(x - self.agent.x, 2))
+
+    def _go_radom(self):
+        rand_dir = random.randint(1, 4)
+        step_size = self.block_size
+
+        new_x, new_y = self.agent.x, self.agent.y
+
+        if rand_dir == 1:
+            new_x = self.normalise(self.agent.x + step_size, self.width) 
+        elif rand_dir == 2:
+            new_y = self.normalise(self.agent.y + step_size, self.height) 
+        elif rand_dir == 3:
+            new_x = self.normalise(self.agent.x - step_size, self.width) 
+        elif rand_dir == 4:
+            new_y = self.normalise(self.agent.y - step_size, self.height) 
 
         collision = False
         x, y = int((new_x)/self.block_size), int((new_y)/self.block_size)
@@ -51,24 +137,12 @@ class IndividualController:
         if not collision:
             self.agent.x, self.agent.y = new_x, new_y
 
-    @staticmethod
-    def is_within_screen_bounds(new_x, new_y, width, height, block_size) -> bool:
-        half_block_size = block_size // 2
-
-        if new_x  < 0 or new_x + half_block_size > width:
-            return False
-        if new_y - half_block_size < 0 or new_y + half_block_size > height:
-            return False
-        
-        return True
-        
-
-class CrowdController:
-    def __init__(self, agents_array):
-        self.agents_array = agents_array
-
-    def step(self):
-        pass
+    def normalise(self, x, max):
+        if x < 0:
+            return 0
+        if x > max:
+            return max - self.block_size//2
+        return x
 
 
 class CheckpointController:
