@@ -78,7 +78,7 @@ class Game:
             self.buttons[3]:self.generate_and_save_plots
         }
 
-        self.controller = "crowd"
+        self.controller = "herd"
         self.max_time_infected = 160
         #Ilość agentów
         self.num_agents = 200
@@ -104,6 +104,27 @@ class Game:
         self._setup()
         self._generate_agents()
 
+    def set_settings(self, settingsData):
+        self.num_agents = int(settingsData["agents_num"])
+        self.block_size = int(settingsData["block_size"])
+        self.controller = settingsData["controller"][0][1]
+        self.infection_spread.R0 = int(settingsData["r0"])
+        self._setup()
+        self._generate_agents()
+
+    def spawn_controller(self) -> Controller:
+        agent_controller = None
+
+        if self.controller == "checkpoints":
+            agent_controller = Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 100)
+        elif self.controller == "herd":
+            agent_controller = Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)   
+        elif self.controller == "random":
+            agent_controller = Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+
+        if agent_controller is not None:
+            return Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+        return agent_controller
 
     def generate_and_save_plots(self):
         # Generowanie wykresu
@@ -149,7 +170,7 @@ class Game:
             "u",
             RED,
             True,
-            Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)
+            self.spawn_controller()
         )
         self.agents.append(infected_agent)
         self.infected_agents.append(infected_agent)
@@ -164,7 +185,7 @@ class Game:
                 "u",
                 WHITE,
                 False,
-                Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)
+                self.spawn_controller()
             )
             self.agents.append(new_agent)
             self.agent_id += 1
