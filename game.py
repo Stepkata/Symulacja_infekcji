@@ -24,6 +24,8 @@ BLUE1 = (0, 0, 255)
 BLUE2 = (0, 100, 255)
 BLACK = (0, 0, 0)
 
+CURED = (104, 197, 219)
+
 
 class Game:
     def __init__(self, w=1400, h=750, bs=50):
@@ -34,7 +36,7 @@ class Game:
         self.board_start = 50
         self.stats_width = 250
 
-        self.speed = 40
+        self.speed = 20
         self.old_speed = 0
 
         self.width = int((w - self.board_start - self.stats_width))
@@ -73,12 +75,14 @@ class Game:
         }
 
         self.controller = "crowd"
+        self.max_time_infected = 80
         #Ilość agentów
         self.num_agents = 1
         #Agenci
         self.agents = []
         #Zainfekopwani agenci
         self.infected_agents = []
+        self.potentially_infected = []
         #Czas do infekcji
         self.time = 0
         # self.agent = Agent(
@@ -203,19 +207,20 @@ class Game:
 
             #Zbieranie sąsiadów 
             for infected_agent in self.infected_agents:
-                self.infection_spread._get_neighbors(infected_agent, self.agents)
+                self.potentially_infected = set(list(self.potentially_infected) + self.infection_spread._get_neighbors(infected_agent, self.agents))
+                infected_agent.time_infected += 1
+                if infected_agent.time_infected > self.max_time_infected:
+                    infected_agent.get_cured()
+                    self.infected_agents.remove(infected_agent)
 
 
             #Do wyznaczania zainfekowanych 
             self.time +=1
+
             if self.time % 10 == 0:
                 self.time = 0 
-                new_infected_agents = []
-                for infected_agent in self.infected_agents:
-                    new_infected_agents += self.infection_spread._spread_infection( 0.8)
-                
-                for new_infected_agent in new_infected_agents:
-                    self.infected_agents.append(new_infected_agent)
+                self.infected_agents += self.infection_spread._spread_infection( self.potentially_infected, 0.8)
+                self.potentially_infected = []
         
 
             #Zmiana koloru zainfekowanych
