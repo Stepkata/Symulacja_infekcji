@@ -1,5 +1,6 @@
 from agent import Agent
 import random
+import math
 
 
 class InfectionSpread():
@@ -19,17 +20,14 @@ class InfectionSpread():
 
             if other_agent.infected:
                 continue
-            distance_x = self.distance_x(infected_agent, other_agent)
-            distance_y = self.distance_y(infected_agent, other_agent)
+            distance = self.get_distance(infected_agent.x, infected_agent.y,
+                                         other_agent.x, other_agent.y)
 
-            #Sprawdzanie po osi x i osi y
-            if distance_x == self.block_size and distance_y == self.block_size:
+            if distance <= 1.5*self.block_size:
                 self.neighbors[infected_agent.id].append(other_agent)
-            
-            #Sprawdzanie po przekatnej
-            if distance_x == distance_y == self.block_size:
-                self.neighbors[infected_agent.id].append(other_agent)
-            
+
+    def get_distance(self, x1, y1, x2, y2):
+        return math.sqrt(math.pow(x1 - x2, 2) + math.pow(y1- y2, 2))      
             
     def _reset_neighbors(self):
         self.neighbors = {}

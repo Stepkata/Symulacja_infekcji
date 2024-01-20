@@ -110,7 +110,7 @@ class CrowdController:
             return -self.block_size
 
     def get_distance(self, x, y):
-        return math.sqrt(math.pow(x - self.agent.x, 2) + math.pow(x - self.agent.x, 2))
+        return math.sqrt(math.pow(x - self.agent.x, 2) + math.pow(y - self.agent.y, 2))
 
     def _go_radom(self):
         rand_dir = random.randint(1, 4)
