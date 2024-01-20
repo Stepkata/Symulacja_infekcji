@@ -48,9 +48,9 @@ def start_the_level_creator():
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30)
     settingsData = settings.get_input_data() 
-    while True:
+    while level_creator.return_to_main_menu == False:
         level_creator.play_step()
-
+    
 
 def get_saved_levels():
     directory_path = "saves"
@@ -131,9 +131,10 @@ def main():
         for event in events:
             if event.type == update_loading:
                 progress = loading.get_widget("1")
-                progress.set_value(progress.get_value() + 1)
+                new_value = min(progress.get_value() + 1, 100) 
+                progress.set_value(new_value)
                 if progress.get_value() == 100:
-                    pygame.time.set_timer(update_loading, 0)
+                    pygame.time.set_timer(update_loading, 0)          
             if event.type == pygame.QUIT:
                 exit()
 
