@@ -8,6 +8,8 @@ class InfectionSpread():
     def __init__(self, block_size):
         self.infected_agent = None
         self.block_size = block_size
+        self.R0 = 2
+        self.min_distance = 2.8*self.block_size
 
     def _get_neighbors(self, infected_agent, all_agents):
 
@@ -18,10 +20,8 @@ class InfectionSpread():
             distance = self.get_distance(infected_agent.x, infected_agent.y,
                                          other_agent.x, other_agent.y)
 
-            if distance <= 1.41*self.block_size:
-                neighbors.append(other_agent)
-            if distance <= 2.8*self.block_size:
-                if random.uniform(0, 1) < 0.5:
+            if distance <= self.min_distance:
+                if random.uniform(0, 1) < 1/self.R0*distance:
                     neighbors.append(other_agent)
         return neighbors
 
