@@ -1,6 +1,6 @@
-import pygame
 import random
-from astar import Astar
+from AStar import Astar
+from astar2 import a_star
 from agent import Agent
 from tile import Tile
 import numpy as np
@@ -44,10 +44,16 @@ class IndividualController:
             self.agent.x, self.agent.y = new_x, new_y
     
     def normalise(self, x, max):
+        print(self.block_size, self.block_size//2)
+        if(max % self.block_size == 0):
+            rest = self.block_size//2
+        else:
+            rest = 0
+
         if x < 0:
             return self.block_size//2
         if x > max:
-            return max - self.block_size//2
+            return max - rest
         return x
         
 
@@ -148,17 +154,25 @@ class CrowdController:
 class CheckpointController:
     def __init__(self, width, height, block_size, tiles, checkpoints, wait_time) -> None:
         self.agent: Agent = None
-        self.tiles: Tile = tiles
+        self.tiles = tiles
         self.width: int = width
         self.height: int = height
         self.block_size: int = block_size
 
-        self.checkpoints: list = checkpoints #self._random_subarray(checkpoints, random.randint(1, len(checkpoints)))
+        self.checkpoints: list = checkpoints
         self.waiting: int = 0
         self.wait_time: int = wait_time
 
-        self.astar = Astar(self.get_map())
+
         self.path = []
+
+    def get_map(self):
+        map = np.zeros(self.tiles.shape)
+        for x, row in enumerate(self.tiles):
+            for y, tile in enumerate(row):
+                map[x, y] = 1 if tile.solid else 0
+
+        return map
 
     def _step(self):
         if self.agent is None:
@@ -173,13 +187,12 @@ class CheckpointController:
                 next_check = random.choice(self.checkpoints)
                 check_position = (next_check.x//self.block_size, next_check.y//self.block_size)
                 agent_position = (self.agent.x//self.block_size, self.agent.y//self.block_size)
-                print(check_position)
-                print(agent_position)
                 if check_position == agent_position:
                     self.path = []
                 else:
-                    self.astar.set_endpoints(agent_position, check_position)
-                    self.path = self.astar.astar()
+                    #self.astar.set_endpoints(agent_position, check_position)
+                    self.path = a_star(agent_position, check_position, self.get_map())
+                    print("Generowanie ścieżki")
                     print(self.path)
         else:
             if(len(self.path) > 0): #going to the checkpoint

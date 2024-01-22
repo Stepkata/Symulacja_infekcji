@@ -1,5 +1,4 @@
 CURED = (104, 197, 219)
-
 class Agent:
     def __init__(self,id, x, y, direction, color, infected, controller) -> None:
         self.id = id

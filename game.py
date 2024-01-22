@@ -40,8 +40,8 @@ class Game:
         self.speed = 20
         self.old_speed = 0
 
-        self.width = int((w - self.board_start - self.stats_width))
-        self.height = int((h - 2 * self.board_start))
+        self.width = int( self.block_size*(w - self.board_start - self.stats_width)//self.block_size)
+        self.height = int(self.block_size*(h - 2 * self.board_start)//self.block_size)
 
         # init display
         self.display = pygame.display.set_mode(
@@ -115,7 +115,7 @@ class Game:
     def spawn_controller(self) -> Controller:
 
         if self.controller == "checkpoint":
-            return Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 100)
+            return Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 5)
         elif self.controller == "herd":
             return Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)   
         elif self.controller == "random":
@@ -125,6 +125,7 @@ class Game:
     def generate_and_save_plots(self):
         # Generowanie wykresu
         plt.figure(figsize=(10, 6))
+
         healthy_counts = [self.num_agents - infected_count - cured_count for infected_count, cured_count in zip(self.infected_counts, self.cured_counts)]
         plt.plot(self.infected_counts, label='Zarażeni', color='red')
         plt.plot(self.cured_counts, label='Wyzdrowiali', color='green')
@@ -169,7 +170,6 @@ class Game:
             True,
             self.spawn_controller()
         )
-        print(self.spawn_controller())
         self.agents.append(infected_agent)
         self.infected_agents.append(infected_agent)
         
@@ -221,7 +221,6 @@ class Game:
             print(f'Successfully loaded from {file_path}')
         except Exception as e:
             print(f'Error loading from {file_path}: {e}')
-
 
     def step_machine(self, sim_steps):
         for step in range(0, sim_steps):

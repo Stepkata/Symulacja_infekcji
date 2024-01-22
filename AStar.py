@@ -1,3 +1,5 @@
+import heapq
+''''''
 class Node():
     """A node class for A* Pathfinding"""
 
@@ -11,7 +13,7 @@ class Node():
 
     def __eq__(self, other):
         return self.position == other.position
-    
+
 class Astar():
     """A class for A* Pathfinding algorithm"""
 
@@ -23,7 +25,57 @@ class Astar():
     def set_endpoints(self, start, end):
         self.start = start
         self.end = end
-    
+
+        def heuristic(a, b):
+            return abs(a.x - b.x) + abs(a.y - b.y)
+
+        def a_star(start, end, maze):
+            open_set = []
+            closed_set = set()
+            start_node = Node(start[0], start[1])
+            goal_node = Node(end[0], end[1])
+            heapq.heappush(open_set, start_node)
+
+            while open_set:
+                current_node = heapq.heappop(open_set)
+                closed_set.add((current_node.x, current_node.y))
+
+                if current_node.x == goal_node.x and current_node.y == goal_node.y:
+                    return reconstruct_path(current_node)
+
+                neighbors = get_neighbors(current_node, maze)
+                for neighbor in neighbors:
+                    if (neighbor.x, neighbor.y) in closed_set:
+                        continue
+
+                    neighbor.g = current_node.g + 1
+                    neighbor.h = heuristic(neighbor, goal_node)
+                    neighbor.f = neighbor.g + neighbor.h
+                    neighbor.parent = current_node
+
+                    if not any(
+                            node.x == neighbor.x and node.y == neighbor.y for
+                            node in open_set):
+                        heapq.heappush(open_set, neighbor)
+
+            return None
+
+        def get_neighbors(node, maze):
+            neighbors = []
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+                x2, y2 = node.x + dx, node.y + dy
+                if 0 <= x2 < len(maze) and 0 <= y2 < len(maze[0]) and maze[x2][
+                    y2] == 0:
+                    neighbors.append(Node(x2, y2))
+            return neighbors
+
+        def reconstruct_path(node):
+            path = []
+            while node is not None:
+                path.append((node.x, node.y))
+                node = node.parent
+            return path[::-1]
+
     def astar(self):
         """Returns a list of tuples as a path from the given start to the given end in the given maze"""
 
@@ -32,7 +84,7 @@ class Astar():
         start_node.g = start_node.h = start_node.f = 0
         end_node = Node(None, self.end)
         end_node.g = end_node.h = end_node.f = 0
-
+        print("astar1")
         # Initialize both open and closed list
         open_list = []
         closed_list = []
@@ -42,17 +94,21 @@ class Astar():
 
         # Loop until you find the end
         while len(open_list) > 0:
-
+            print("--------------------")
             # Get the current node
             current_node = open_list[0]
             current_index = 0
+            min_node = current_node
+            min_index = current_index
             for index, item in enumerate(open_list):
-                if item.f < current_node.f:
-                    current_node = item
-                    current_index = index
+                if item.f < min_node.f:
+                    min_node = item
+                    min_index = index
+            current_node = min_node
+            current_index = min_index
 
             # Pop current off open list, add to closed list
-            open_list.pop(current_index)
+            print("poped:", open_list.pop(current_index).position)
             closed_list.append(current_node)
 
             # Found the goal
@@ -99,14 +155,15 @@ class Astar():
                 child.h = ((child.position[0] - end_node.position[0]) ** 2) + ((child.position[1] - end_node.position[1]) ** 2)
                 child.f = child.g + child.h
 
+
                 # Child is already in the open list
                 for open_node in open_list:
                     if child == open_node and child.g > open_node.g:
                         continue
+                open_list.append(child)
+                print(child.position)
 
                 # Add the child to the open list
-                open_list.append(child)
-
 
 def main():
 
