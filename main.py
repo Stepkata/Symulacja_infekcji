@@ -19,6 +19,7 @@ pygame.init()
 surface = pygame.display.set_mode((1400, 750))
 game = Game()
 level_creator = GameLevelCreator()
+level_creator_bool = False
 
 controllers = [
         ("Random", 'random'),
@@ -28,6 +29,8 @@ controllers = [
 
 
 def set_level(value, level):
+    global level_creator_bool
+    level_creator_bool = True
     if level != 0:
         print("LOADED: ", value)
         game.load(value[0][0])
@@ -39,6 +42,8 @@ def start_the_game():
     pygame.time.set_timer(update_loading, 30)
     settingsData = settings.get_input_data() 
     print(settingsData)
+    if not level_creator_bool:
+        game.set_settings(settingsData)
     game.step_machine(10000)
     while True:
         game.play_step()
@@ -48,9 +53,9 @@ def start_the_level_creator():
     mainmenu._open(loading)
     pygame.time.set_timer(update_loading, 30)
     settingsData = settings.get_input_data() 
-    while True:
+    while level_creator.return_to_main_menu == False:
         level_creator.play_step()
-
+    
 
 def get_saved_levels():
     directory_path = "saves"
@@ -131,9 +136,10 @@ def main():
         for event in events:
             if event.type == update_loading:
                 progress = loading.get_widget("1")
-                progress.set_value(progress.get_value() + 1)
+                new_value = min(progress.get_value() + 1, 100) 
+                progress.set_value(new_value)
                 if progress.get_value() == 100:
-                    pygame.time.set_timer(update_loading, 0)
+                    pygame.time.set_timer(update_loading, 0)          
             if event.type == pygame.QUIT:
                 exit()
 

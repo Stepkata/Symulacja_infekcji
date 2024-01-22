@@ -8,7 +8,7 @@ import random
 from infectionSpread import InfectionSpread
 from button import Button 
 import Controller
-
+import matplotlib.pyplot as plt
 pygame.init()
 # font = pygame.font.Font('arial.ttf', 25)
 font = pygame.font.SysFont("arial", 25)
@@ -27,8 +27,9 @@ BLACK = (0, 0, 0)
 CURED = (104, 197, 219)
 
 
+
 class Game:
-    def __init__(self, w=1400, h=750, bs=50):
+    def __init__(self, w=1400, h=750, bs=10):
         # display params
         self.screen_width = w
         self.screen_height = h
@@ -66,18 +67,21 @@ class Game:
             Button("Speed", self.screen_width-140, 100, 30, 20, BLUE1),
             Button("Speed_down", self.screen_width-140, 130, 30, 20, BLUE1, False),
             Button("Stop", self.screen_width-180, 280, 50, 50, RED),
+            Button("Generate Plot", self.screen_width-180, 360, 100, 50, GREEN)
         ]
+
 
         self.button_actions = {
             self.buttons[0]: self._handle_sp_button_up,
             self.buttons[1]:self._handle_sp_button_down,
             self.buttons[2]:self._handle_stop,
+            self.buttons[3]:self.generate_and_save_plots
         }
 
-        self.controller = "crowd"
-        self.max_time_infected = 80
+        self.controller = "herd"
+        self.max_time_infected = 160
         #Ilość agentów
-        self.num_agents = 1
+        self.num_agents = 200
         #Agenci
         self.agents = []
         #Zainfekopwani agenci
@@ -89,10 +93,54 @@ class Game:
         #     self.block_size // 2 + 500, self.block_size // 2 + 250, "u"
         # )
         #ID agentow
+
+        #WYKRESY
+        self.infected_counts = []
+        self.cured_counts = []
+
+
         self.agent_id = 0
         self.infection_spread = InfectionSpread(self.block_size)
         self._setup()
         self._generate_agents()
+
+    def set_settings(self, settingsData):
+        self.num_agents = int(settingsData["agents_num"])
+        self.block_size = int(settingsData["block_size"])
+        self.controller = settingsData["controller"][0][1]
+        self.infection_spread.R0 = int(settingsData["r0"])
+        self._setup()
+        self._generate_agents()
+
+    def spawn_controller(self) -> Controller:
+        agent_controller = None
+
+        if self.controller == "checkpoints":
+            agent_controller = Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 100)
+        elif self.controller == "herd":
+            agent_controller = Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)   
+        elif self.controller == "random":
+            agent_controller = Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+
+        if agent_controller is not None:
+            return Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
+        return agent_controller
+
+    def generate_and_save_plots(self):
+        # Generowanie wykresu
+        plt.figure(figsize=(10, 6))
+        healthy_counts = [self.num_agents - infected_count - cured_count for infected_count, cured_count in zip(self.infected_counts, self.cured_counts)]
+        plt.plot(self.infected_counts, label='Zarażeni', color='red')
+        plt.plot(self.cured_counts, label='Wyzdrowiali', color='green')
+        plt.plot(healthy_counts, label='Zdrowi', color='blue')
+        plt.xlabel('Krok czasowy')
+        plt.ylabel('Liczba agentów')
+        plt.title('Dynamika zarażeń i wyzdrowień')
+        plt.legend()
+        
+        # Zapisywanie wykresu do folderu results
+        plt.savefig('results/plot.png')
+        plt.close()
 
     def _place_agents_randomly(self):
         for agent in self.agents:
@@ -122,7 +170,7 @@ class Game:
             "u",
             RED,
             True,
-            Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)
+            self.spawn_controller()
         )
         self.agents.append(infected_agent)
         self.infected_agents.append(infected_agent)
@@ -137,7 +185,7 @@ class Game:
                 "u",
                 WHITE,
                 False,
-                Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)
+                self.spawn_controller()
             )
             self.agents.append(new_agent)
             self.agent_id += 1
@@ -219,14 +267,17 @@ class Game:
 
             if self.time % 10 == 0:
                 self.time = 0 
-                self.infected_agents += self.infection_spread._spread_infection( self.potentially_infected, len(self.infected_agents))
+                self.infected_agents += self.infection_spread._spread_infection( self.potentially_infected, 0.6)
                 self.potentially_infected = []
         
 
             #Zmiana koloru zainfekowanych
             for agent in self.agents:
                 self._change_agent_color(agent)
-
+            
+            #Zbieranie danych do wykresów
+            self.infected_counts.append(len(self.infected_agents))
+            self.cured_counts.append(len([agent for agent in self.agents if agent.cured]))
         self._update_ui()
         self.clock.tick(self.speed)
         return False
@@ -286,6 +337,7 @@ class Game:
         for button in self.buttons:
             pygame.draw.rect(self.display, button.color, button.rect)
             self.display.blit(button.name, button.name_position)
+          
 
 
 
@@ -301,5 +353,8 @@ if __name__ == "__main__":
     game.load("test")
     while True:
         game.play_step()
+    
+    
+    
 
     pygame.quit()

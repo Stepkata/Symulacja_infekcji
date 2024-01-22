@@ -42,7 +42,10 @@ class InfectionSpread():
         new_infected_agents = []
         if len(potential_infection) == 0:
             return new_infected_agents
-        sample_size = num_infected*r0 if num_infected*r0 < len( potential_infection) else len(potential_infection)-1
+        
+        #tu wywalalo czasami ujemna wartosc wczesniej 
+        sample_size = min(int(num_infected * r0), len(potential_infection))
+        
         chosen = random.sample(list(potential_infection), sample_size )
         for agent in chosen:
             if agent.cured:

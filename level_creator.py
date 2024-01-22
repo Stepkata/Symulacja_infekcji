@@ -70,11 +70,20 @@ class GameLevelCreator:
             self.buttons[7]:self._handle_save
         }
 
+        #Przycisk powrotu do menu
+        self.return_to_main_menu = False
+        self.buttons.append(Button("Return to Main Menu", self.screen_width-180, 640, 150, 50, GREEN))
+        self.button_actions[self.buttons[-1]] = self._handle_return_to_main_menu
+
         self.wall_state = 0
 
         self.tiles = np.empty((self.w, self.h), dtype=object)
         self.checkpoints = []
         self._setup()
+
+    def _handle_return_to_main_menu(self):
+        print("returning to main menu")
+        self.return_to_main_menu = True
 
     def _setup(self) -> None:
         self.h = int(self.height/self.block_size)+1
