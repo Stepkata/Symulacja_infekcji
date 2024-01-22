@@ -97,6 +97,7 @@ class Game:
         #WYKRESY
         self.infected_counts = []
         self.cured_counts = []
+        self.plot_counter = 0
 
 
         self.agent_id = 0
@@ -134,8 +135,9 @@ class Game:
         plt.legend()
         
         # Zapisywanie wykresu do folderu results
-        plt.savefig('results/plot.png')
+        plt.savefig(f'results/plot_{self.plot_count}.png')
         plt.close()
+        self.plot_count += 1
 
     def _place_agents_randomly(self):
         for agent in self.agents:
