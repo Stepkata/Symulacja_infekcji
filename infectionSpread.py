@@ -38,13 +38,13 @@ class InfectionSpread():
         return abs(agent1.y - agent2.y)
     
     
-    def _spread_infection(self, potential_infection, num_infected, r0=2, reinfection_probability = 0.05):
+    def _spread_infection(self, potential_infection, num_infected, reinfection_probability = 0.05):
         new_infected_agents = []
         if len(potential_infection) == 0:
             return new_infected_agents
         
         #tu wywalalo czasami ujemna wartosc wczesniej 
-        sample_size = min(int(num_infected * r0), len(potential_infection))
+        sample_size = min(int(num_infected * self.R0), len(potential_infection))
         
         chosen = random.sample(list(potential_infection), sample_size )
         for agent in chosen:

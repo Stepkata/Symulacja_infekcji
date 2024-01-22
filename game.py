@@ -108,7 +108,7 @@ class Game:
         self.controller = settingsData["controller"][0][1]
         print(self.controller)
         print(settingsData["controller"][0][1])
-        self.infection_spread.R0 = int(settingsData["r0"])
+        self.infection_spread.R0 = float(settingsData["r0"])
         self._generate_agents()
 
     def spawn_controller(self) -> Controller:
