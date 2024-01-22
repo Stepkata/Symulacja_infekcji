@@ -126,19 +126,19 @@ class Game:
         # Generowanie wykresu
         plt.figure(figsize=(10, 6))
 
-        healthy_counts = [self.num_agents - infected_count - cured_count for infected_count, cured_count in zip(self.infected_counts, self.cured_counts)]
+        healthy_counts = [self.num_agents - infected_count - cured_count+ 1  for infected_count, cured_count in zip(self.infected_counts, self.cured_counts)] 
         plt.plot(self.infected_counts, label='Zarażeni', color='red')
         plt.plot(self.cured_counts, label='Wyzdrowiali', color='green')
-        plt.plot(healthy_counts, label='Zdrowi', color='blue')
+        plt.plot(healthy_counts  , label='Zdrowi', color='blue')
         plt.xlabel('Krok czasowy')
         plt.ylabel('Liczba agentów')
         plt.title('Dynamika zarażeń i wyzdrowień')
         plt.legend()
         
         # Zapisywanie wykresu do folderu results
-        plt.savefig(f'results/plot_{self.plot_count}.png')
+        plt.savefig(f'results/plot_{self.plot_counter}.png')
         plt.close()
-        self.plot_count += 1
+        self.plot_counter += 1
 
     def _place_agents_randomly(self):
         for agent in self.agents:
@@ -190,7 +190,7 @@ class Game:
 
         self._place_agents_randomly()
 
-        if self.controller == "crowd":
+        if self.controller == "herd":
             for agent in self.agents:
                 agent.controller.agents_array = self.agents
 
@@ -251,7 +251,7 @@ class Game:
                 agent._run_controller()
 
             #Zbieranie sąsiadów 
-            for infected_agent in self.infected_agents:
+            for infected_agent in self.infected_agents[:]:
                 self.potentially_infected = set(list(self.potentially_infected) + self.infection_spread._get_neighbors(infected_agent, self.agents))
                 infected_agent.time_infected += 1
                 if infected_agent.time_infected > self.max_time_infected:
@@ -273,6 +273,12 @@ class Game:
                 self._change_agent_color(agent)
             
             #Zbieranie danych do wykresów
+            
+
+            for agent in self.infected_agents:
+                if agent.cured:
+                    self.infected_agents.remove(agent)
+            
             self.infected_counts.append(len(self.infected_agents))
             self.cured_counts.append(len([agent for agent in self.agents if agent.cured]))
         self._update_ui()
