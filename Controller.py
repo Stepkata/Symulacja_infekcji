@@ -160,14 +160,6 @@ class CheckpointController:
         self.astar = Astar(self.get_map())
         self.path = []
 
-    def get_map(self):
-        map = np.zeros(self.tiles.shape)
-        for x, row in enumerate(self.tiles):
-            for y, tile in enumerate(row):
-                map[x, y] = 1 if tile.solid else 0
-        print(map)
-        return map
-
     def _step(self):
         if self.agent is None:
             raise ValueError("tablica agentów nie zostały ustawione")
