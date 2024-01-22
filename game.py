@@ -251,7 +251,7 @@ class Game:
                 agent._run_controller()
 
             #Zbieranie sąsiadów 
-            for infected_agent in self.infected_agents[:]:
+            for infected_agent in self.infected_agents:
                 self.potentially_infected = set(list(self.potentially_infected) + self.infection_spread._get_neighbors(infected_agent, self.agents))
                 infected_agent.time_infected += 1
                 if infected_agent.time_infected > self.max_time_infected:
@@ -266,18 +266,10 @@ class Game:
                 self.time = 0 
                 self.infected_agents += self.infection_spread._spread_infection(self.potentially_infected, len(self.infected_agents))
                 self.potentially_infected = []
-        
 
             #Zmiana koloru zainfekowanych
             for agent in self.agents:
                 self._change_agent_color(agent)
-            
-            #Zbieranie danych do wykresów
-            
-
-            for agent in self.infected_agents:
-                if agent.cured:
-                    self.infected_agents.remove(agent)
             
             self.infected_counts.append(len(self.infected_agents))
             self.cured_counts.append(len([agent for agent in self.agents if agent.cured]))
@@ -341,9 +333,6 @@ class Game:
             pygame.draw.rect(self.display, button.color, button.rect)
             self.display.blit(button.name, button.name_position)
           
-
-
-
 
 if __name__ == "__main__":
     pygame.init()

@@ -22,8 +22,7 @@ class InfectionSpread():
 
             if distance <= self.min_distance:
                 if random.uniform(0, 1) < 1/self.R0*distance:
-                    if other_agent not in neighbors:
-                        neighbors.append(other_agent)
+                    neighbors.append(other_agent)
         return neighbors
 
     def get_distance(self, x1, y1, x2, y2):
@@ -53,6 +52,7 @@ class InfectionSpread():
                 if random.uniform(0, 1) < reinfection_probability:
                     new_infected_agents.append(agent)
                     agent.infected = True
+                    agent.cured = False
             else:
                 new_infected_agents.append(agent)
                 agent.infected = True
