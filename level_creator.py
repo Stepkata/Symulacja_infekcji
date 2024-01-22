@@ -72,7 +72,7 @@ class GameLevelCreator:
 
         #Przycisk powrotu do menu
         self.return_to_main_menu = False
-        self.buttons.append(Button("Return to Main Menu", self.screen_width-180, 640, 150, 50, GREEN))
+        self.buttons.append(Button("Return to Menu", self.screen_width-180, 640, 150, 50, GREEN))
         self.button_actions[self.buttons[-1]] = self._handle_return_to_main_menu
 
         self.wall_state = 0

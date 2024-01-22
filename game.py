@@ -105,27 +105,22 @@ class Game:
         self._generate_agents()
 
     def set_settings(self, settingsData):
-        self.num_agents = int(settingsData["agents_num"])
-        self.block_size = int(settingsData["block_size"])
         self.controller = settingsData["controller"][0][1]
+        print(self.controller)
+        print(settingsData["controller"][0][1])
         self.infection_spread.R0 = int(settingsData["r0"])
-        self._setup()
         self._generate_agents()
 
     def spawn_controller(self) -> Controller:
-        agent_controller = None
 
-        if self.controller == "checkpoints":
-            agent_controller = Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 100)
+        if self.controller == "checkpoint":
+            return Controller.CheckpointController(self.width, self.height, self.block_size, self.tiles, self.checkpoints, 100)
         elif self.controller == "herd":
-            agent_controller = Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)   
+            return Controller.CrowdController(self.width, self.height, self.block_size, self.tiles)   
         elif self.controller == "random":
-            agent_controller = Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
-
-        if agent_controller is not None:
             return Controller.IndividualController(self.width, self.height, self.block_size, self.tiles)
-        return agent_controller
 
+    
     def generate_and_save_plots(self):
         # Generowanie wykresu
         plt.figure(figsize=(10, 6))
@@ -172,6 +167,7 @@ class Game:
             True,
             self.spawn_controller()
         )
+        print(self.spawn_controller())
         self.agents.append(infected_agent)
         self.infected_agents.append(infected_agent)
         
@@ -213,7 +209,7 @@ class Game:
         try:
             load_data = np.load( file_path ,  allow_pickle=True)
             print(load_data[()]['block_size'])
-            self.block_size = load_data[()]['block_size']
+            self.block_size = int(load_data[()]['block_size'])
             self.h = int(self.height/self.block_size)+1
             self.w = int(self.width/self.block_size)+1
             self.tiles = load_data[()]['tiles']
@@ -267,7 +263,7 @@ class Game:
 
             if self.time % 10 == 0:
                 self.time = 0 
-                self.infected_agents += self.infection_spread._spread_infection( self.potentially_infected, 0.6)
+                self.infected_agents += self.infection_spread._spread_infection(self.potentially_infected, len(self.infected_agents))
                 self.potentially_infected = []
         
 

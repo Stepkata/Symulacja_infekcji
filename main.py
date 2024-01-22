@@ -42,8 +42,8 @@ def start_the_game():
     pygame.time.set_timer(update_loading, 30)
     settingsData = settings.get_input_data() 
     print(settingsData)
-    if not level_creator_bool:
-        game.set_settings(settingsData)
+    
+    game.set_settings(settingsData)
     game.step_machine(10000)
     while True:
         game.play_step()
@@ -90,10 +90,6 @@ settings.add.text_input(title="User Name : ", textinput_id="username", default='
 settings.add.text_input(title="R_0: ", textinput_id="r0", default=2)
 settings.add.dropselect(title="Controller", items=controllers, 
                         dropselect_id="controller", default=0) 
-settings.add.range_slider(title="Number of agents", default=60, range_values=( 
-    2, 100), increment=1, value_format=lambda x: str(int(x)), rangeslider_id="agents_num") 
-settings.add.range_slider(title="Block_size", default=60, range_values=( 
-    10, 200), increment=1, value_format=lambda x: str(int(x)), rangeslider_id="block_size") 
 
 settings.add.button(title="Restore Defaults", action=settings.reset_value, 
                     font_color=WHITE, background_color=RED)
